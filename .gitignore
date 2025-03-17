@@ -1,0 +1,3 @@
+*.fig
+*.old
+__pycache__

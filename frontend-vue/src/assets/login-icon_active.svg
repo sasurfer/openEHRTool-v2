@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+<!-- CreationDate: 2025-02-28 16:19:17 -->
+<!-- Magnification: 1.05 -->
+<svg	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="30pt" height="30pt"
+	viewBox="3157 5062 470 472">
+<g fill="none">
+<!-- Circle -->
+<circle cx="3389" cy="5271" r="77" fill="#FFFFFF"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="3392" cy="5297" r="227"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3389,5522 3389,5365 3331,5365 3306,5368 3288,5370 3280,5375 3275,5379 3275,5387
+ 3275,5394 3280,5490 3316,5509 3349,5517 3376,5522" fill="#FFFFFF"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3393,5521 3393,5364 3451,5364 3476,5366 3494,5368 3502,5373 3507,5378 3507,5384
+ 3507,5393 3502,5489 3466,5507 3433,5516 3406,5521" fill="#FFFFFF"
+	stroke="#FFFFFF" stroke-width="8px"/>
+</g>
+</svg>

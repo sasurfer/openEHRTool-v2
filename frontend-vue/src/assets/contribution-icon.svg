@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+<!-- CreationDate: 2025-02-28 17:45:22 -->
+<!-- Magnification: 1.05 -->
+<svg	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="33pt" height="38pt"
+	viewBox="3201 4396 522 590">
+<g fill="none">
+<!-- Line -->
+<rect x="3409" y="4640" width="302" height="334" fill="#ffffff"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3453,4719 3454,4719 3462,4720 3473,4721 3484,4722 3493,4722 3501,4721 3509,4720
+ 3518,4718 3528,4716 3537,4715 3546,4714 3554,4715 3561,4716 3568,4718 3575,4720
+ 3581,4723 3588,4724 3594,4725 3600,4724 3607,4723 3614,4720 3621,4718 3628,4716
+ 3634,4715 3640,4714 3646,4716 3654,4718 3663,4722 3668,4724 3669,4725"
+	stroke="#000000" stroke-width="8px" stroke-linejoin="bevel"/>
+<!-- Line -->
+<polyline points=" 3465,4796 3467,4795 3476,4791 3490,4785 3503,4779 3514,4777 3523,4776 3532,4776
+ 3542,4778 3553,4780 3563,4783 3574,4786 3585,4788 3593,4789 3602,4790 3613,4790
+ 3627,4790 3641,4790 3653,4790 3660,4790 3661,4790"
+	stroke="#000000" stroke-width="8px" stroke-linejoin="bevel"/>
+<!-- Line -->
+<polyline points=" 3459,4871 3461,4870 3470,4868 3481,4865 3489,4864 3494,4864 3499,4865 3504,4868
+ 3510,4872 3514,4876 3515,4877"
+	stroke="#000000" stroke-width="8px" stroke-linejoin="bevel"/>
+<!-- Line -->
+<polygon points=" 3535,4835 3532,4861 3553,4847 3542,4841" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3213,4703 3213,4408 3272,4408 3280,4416 3283,4423 3504,4423 3504,4478" fill="#ffffff"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3249" y="4455" width="222" height="113" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3551,4816 3559,4828 3569,4830 3684,4698 3667,4686" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3220,4703 3502,4703 3558,4483 3273,4483" fill="#ffffff"
+	stroke="#000000" stroke-width="8px"/>
+</g>
+</svg>

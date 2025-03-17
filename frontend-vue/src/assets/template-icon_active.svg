@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+<!-- CreationDate: 2025-02-28 16:08:05 -->
+<!-- Magnification: 1.05 -->
+<svg	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="29pt" height="27pt"
+	viewBox="3171 4674 451 417">
+<g fill="none">
+<!-- Line -->
+<rect x="3370" y="4686" width="90" height="83" fill="#000000"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3264" y="4830" width="90" height="83" fill="#000000"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3455" y="4828" width="90" height="83" fill="#000000"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3384" y="4994" width="90" height="83" fill="#000000"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3520" y="4994" width="90" height="83" fill="#000000"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3183" y="4996" width="90" height="83" fill="#000000"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3304,4829 3304,4805 3503,4805 3503,4828"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3416,4803 3416,4768"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3220,4994 3220,4950 3311,4950 3311,4913"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3426,4992 3426,4950 3571,4950 3571,4994"
+	stroke="#FFFFFF" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3496,4949 3496,4912"
+	stroke="#FFFFFF" stroke-width="8px"/>
+</g>
+</svg>
