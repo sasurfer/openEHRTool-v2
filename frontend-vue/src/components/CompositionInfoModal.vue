@@ -2,6 +2,7 @@
   <div class="modal" v-if="isVisible">
     <div class="modal-content">
       <h2>Stored Compositions:</h2>
+      <RotateSquare2 class='spinner' v-if="isLoading" :size="'40px'" :background="'#ff5733'"></RotateSquare2>
       <ol>
         <li v-for="(composition,index) in compositionData" :key="composition" :class="{'odd-item': index % 2 !== 0, 'even-item': index % 2 === 0}">
           {{ composition }}
@@ -16,9 +17,14 @@
 </template>
 
 <script>
+import RotateSquare2 from '@/components/ui/RotateSquare2.vue';
 export default {
   props: {
     isVisible: {
+      type: Boolean,
+      required: true,
+    },
+    isLoading: {
       type: Boolean,
       required: true,
     },
@@ -26,6 +32,9 @@ export default {
       type: Array,
       required: true,
     },
+  },
+  components: {
+    RotateSquare2,
   },
   methods: {
     closeCompositionModal() {
@@ -81,6 +90,14 @@ button:hover {
 /* Style for odd items */
 .odd-item {
   background-color: #912929; /* Slightly darker grey for odd items */
+}
+
+.spinner {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 60px;
+  margin-right: 20px;
+  padding: 20px;
 }
   </style>
 

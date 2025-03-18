@@ -79,13 +79,16 @@
  
     
     <EHRInfoModal v-if="isEHRInfoVisible" :isVisible="isEHRInfoVisible" :ehrData="ehrData"
-      @close-ehr-modal="closeEHRInfo" />
+      @close-ehr-modal="closeEHRInfo" :isLoading="isLoadingEHR" />
     <TemplateInfoModal v-if="isTemplateInfoVisible" :isVisible="isTemplateInfoVisible" :templateData="templateData"
-      @close-template-modal="closeTemplateInfo" />
+      @close-template-modal="closeTemplateInfo" 
+      :isLoading="isLoadingTemplate" />
     <CompositionInfoModal v-if="isCompositionInfoVisible" :isVisible="isCompositionInfoVisible"
-      :compositionData="compositionData" @close-composition-modal="closeCompositionInfo" />
+      :compositionData="compositionData" @close-composition-modal="closeCompositionInfo" 
+      :isLoading="isLoadingComposition" />
     <AQLInfoModal v-if="isAQLInfoVisible" :isVisible="isAQLInfoVisible" :aqlData="aqlData"
-      @close-aql-modal="closeAQLInfo" />
+      @close-aql-modal="closeAQLInfo" 
+      :isLoading="isLoadingAQL" />
   </div>
 </template>
 
@@ -138,6 +141,10 @@ export default defineComponent({
       currentParams: [],
       currentFile: false,
       results: null,      
+      isLoadingEHR: false,
+      isLoadingTemplate: false,
+      isLoadingComposition: false,
+      isLoadingAQL: false,  
     };
   },
   mounted() {
@@ -270,6 +277,7 @@ export default defineComponent({
     //for ehr info modal
     async fetchEHRdata() {
       try {
+        this.isLoadingEHR = true;
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/ehrs',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); 
@@ -296,6 +304,9 @@ export default defineComponent({
           }
         }
       }
+      finally {
+        this.isLoadingEHR = false;
+      }
       // this.ehrData = ['ehr1', 'ehr2', 'ehr3', 'ehr4', 'ehr5', 'ehr6', 'ehr7', 'ehr8', 'ehr9', 'ehr10'];
       return this.ehrData;
     },
@@ -313,6 +324,7 @@ export default defineComponent({
     //for template info modal
     async fetchTemplateData() {
       try {
+        this.isLoadingTemplate = true;
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/templates',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); 
@@ -339,6 +351,9 @@ export default defineComponent({
             return
           }
         }
+      }
+      finally {
+        this.isLoadingTemplate = false;
       }
       //       this.templateData = [{ 'template_id': 'template1', 'concept': 'template1', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
       // { 'template_id': 'template2', 'concept': 'template2', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
@@ -371,6 +386,7 @@ export default defineComponent({
       // Fetch composition data here
     async fetchCompositionData() {
       try {
+        this.isLoadingComposition = true;
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/compositions',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); 
@@ -396,7 +412,9 @@ export default defineComponent({
             return
           }
         }
-      }      
+      } finally {
+        this.isLoadingComposition = false;
+      }        
 //      this.compositionData = ['composition1', 'composition2', 'composition3', 'composition4', 'composition5', 'composition6', 'composition7', 'composition8', 'composition9', 'composition10'];
       return this.compositionData;
     },
@@ -415,6 +433,7 @@ export default defineComponent({
     async fetchAQLData() {
       // Fetch AQL data here
       try {
+        this.isLoadingAQL = true;
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/queries',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); 
@@ -439,7 +458,10 @@ export default defineComponent({
             return
           }
         }
-      }      
+      }    
+      finally {
+        this.isLoadingAQL = false;
+      }   
       // this.aqlData = [{ 'name': 'org.ehrbase.local:aql1', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
       // { 'name': 'org.ehrbase.local:aql2', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
       // { 'name': 'org.ehrbase.local:aql3', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },

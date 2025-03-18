@@ -2,13 +2,17 @@
   <div id="app">
     <!-- You can have a global navbar, footer, or other common layout elements here -->
     <Sidebar @open-user-info="openUserInfo" />
-    <rsidebar @open-ehr-info="openEHRInfo" @open-template-info="openTemplateInfo"
-      @open-composition-info="openCompositionInfo" @open-aql-info="openAQLInfo" />
+    <rsidebar  @open-ehr-info="openEHRInfo" @open-template-info="openTemplateInfo"
+      @open-composition-info="openCompositionInfo" @open-aql-info="openAQLInfo" >
+  </rsidebar>
     <UserInfoModal v-if="isUserInfoVisible" :isVisible="isUserInfoVisible" :user="user" @close-modal="closeModal"
       @logout="logout" />
     <div class="main-content">
       <!-- Your main content goes here -->
       <h1>Dashboard</h1>
+      <div v-if="isLoadingDashboard" class="flex justify-center items-center dashboard-spinner">
+        <RotateSquare2  :size="'100px'" :background="'#ff5733'"></RotateSquare2>
+      </div>
       <div class='gridt grid-cols-6 gap-6 p-6'>
         <!-- Info Panel -->
         <MyCardComponent class='card3 col-span-6 bg-green-100 p-6'>
@@ -71,13 +75,16 @@
 
     </div>
     <EHRInfoModal v-if="isEHRInfoVisible" :isVisible="isEHRInfoVisible" :ehrData="ehrData"
-      @close-ehr-modal="closeEHRInfo" />
+      @close-ehr-modal="closeEHRInfo" :isLoading="isLoadingEHR" />
     <TemplateInfoModal v-if="isTemplateInfoVisible" :isVisible="isTemplateInfoVisible" :templateData="templateData"
-      @close-template-modal="closeTemplateInfo" />
+      @close-template-modal="closeTemplateInfo" 
+      :isLoading="isLoadingTemplate" />
     <CompositionInfoModal v-if="isCompositionInfoVisible" :isVisible="isCompositionInfoVisible"
-      :compositionData="compositionData" @close-composition-modal="closeCompositionInfo" />
+      :compositionData="compositionData" @close-composition-modal="closeCompositionInfo" 
+      :isLoading="isLoadingComposition" />
     <AQLInfoModal v-if="isAQLInfoVisible" :isVisible="isAQLInfoVisible" :aqlData="aqlData"
-      @close-aql-modal="closeAQLInfo" />
+      @close-aql-modal="closeAQLInfo" 
+      :isLoading="isLoadingAQL" />
   </div>
 </template>
 
@@ -96,6 +103,7 @@ import MyCardComponent from "@/components/ui/MyCardComponent";
 import CardContent from "@/components/ui/CardContent";
 import MyBarChart from '@/components/MyBarChart.vue'; // Import the chart compone
 import MyPieChart from '@/components/MyPieChart.vue'; // Import the PieChart component
+import  RotateSquare2  from '@/components/ui/RotateSquare2.vue'; // Import the RotateSquare2 component
 
 
 export default defineComponent({
@@ -112,10 +120,16 @@ export default defineComponent({
     MyPieChart,
     MyCardComponent,
     CardContent,
+    RotateSquare2,
   },
   data() {
     return {
       //for user info modal
+      isLoadingDashboard: false,
+      isLoadingEHR: false,
+      isLoadingTemplate: false,
+      isLoadingComposition: false,
+      isLoadingAQL: false,
       isUserInfoVisible: false,
       user: {
         name: localStorage.getItem("username") || "Can not find user",
@@ -197,6 +211,7 @@ export default defineComponent({
   methods: {
     async fetchDashboardData() {
       try {
+        this.isLoadingDashboard = true; 
         // Replace with your Flask API endpoint
         const response = await axios.get('http://127.0.0.1:5000/dashboard',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
@@ -240,6 +255,9 @@ export default defineComponent({
           }
         }
       }
+      finally {
+        this.isLoadingDashboard = false;
+      }
     },
     //for user info modal
     openUserInfo() {
@@ -258,8 +276,13 @@ export default defineComponent({
       this.$router.push("/login"); // Redirect to login page
     },
     //for ehr info modal
+    sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
     async fetchEHRdata() {
       try {
+        this.isLoadingEHR = true;
+        // await this.sleep(5000);
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/ehrs',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); 
@@ -286,6 +309,9 @@ export default defineComponent({
           }
         }
       }
+      finally {
+        this.isLoadingEHR = false;
+      }
       // this.ehrData = ['ehr1', 'ehr2', 'ehr3', 'ehr4', 'ehr5', 'ehr6', 'ehr7', 'ehr8', 'ehr9', 'ehr10'];
       return this.ehrData;
     },
@@ -296,6 +322,7 @@ export default defineComponent({
       this.toggleEHRInfoModal()
       //this.isEHRInfoVisible = true;
       this.ehrData = await this.fetchEHRdata();
+      this.isLoadingEHR = false;
     },
     closeEHRInfo() {
       this.isEHRInfoVisible = false;
@@ -303,6 +330,8 @@ export default defineComponent({
     //for template info modal
     async fetchTemplateData() {
       try {
+        this.isLoadingTemplate = true;
+        // await this.sleep(20000);
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/templates',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); 
@@ -329,6 +358,9 @@ export default defineComponent({
             return
           }
         }
+      }
+      finally {
+        this.isLoadingTemplate = false;
       }
       //       this.templateData = [{ 'template_id': 'template1', 'concept': 'template1', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
       // { 'template_id': 'template2', 'concept': 'template2', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
@@ -361,6 +393,8 @@ export default defineComponent({
       // Fetch composition data here
     async fetchCompositionData() {
       try {
+        this.isLoadingComposition = true;
+        // await this.sleep(20000);
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/compositions',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); 
@@ -386,7 +420,10 @@ export default defineComponent({
             return
           }
         }
-      }      
+      }  
+      finally {
+        this.isLoadingComposition = false;
+      }    
 //      this.compositionData = ['composition1', 'composition2', 'composition3', 'composition4', 'composition5', 'composition6', 'composition7', 'composition8', 'composition9', 'composition10'];
       return this.compositionData;
     },
@@ -405,6 +442,8 @@ export default defineComponent({
     async fetchAQLData() {
       // Fetch AQL data here
       try {
+        this.isLoadingAQL = true;
+        // await this.sleep(20000);
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/queries',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); 
@@ -429,7 +468,10 @@ export default defineComponent({
             return
           }
         }
-      }      
+      }     
+      finally {
+        this.isLoadingAQL = false;
+      } 
       // this.aqlData = [{ 'name': 'org.ehrbase.local:aql1', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
       // { 'name': 'org.ehrbase.local:aql2', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
       // { 'name': 'org.ehrbase.local:aql3', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
@@ -725,4 +767,21 @@ gridt {
   height: 50%;
   width: 100%;
 }
+
+.dashboard-spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.ehrspinner {
+  position: fixed;
+  top: 5%;
+  right: 5%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+}
+
 </style>
