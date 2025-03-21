@@ -1,8 +1,8 @@
 import base64
-from .myredis import get_redis_status
+from app.backend_redis.myredis import get_redis_status
 from datetime import datetime
-from flask import current_app
 import asyncio
+from fastapi import Request
 
 def getauth(username,password):
     message=username+":"+password
@@ -21,14 +21,13 @@ def setEHRbasepaths(input_url):
     url_base_status     = input_url + "rest/status"
     return url_base,url_base_ecis,url_base_admin,url_base_management,url_base_status
 
-def insertlogline(line):
-    if get_redis_status=='ok':
-        r=current_app.config['REDIS_CLIENT']
+def insertlogline(redis_client,line):
+    if get_redis_status(redis_client)=='ok':
         now = datetime.now()
         timestamp = now.strftime("%Y/%m/%d-%H:%M:%S-")
         mykey='log'
         try:
-            r.rpush(mykey,timestamp+line)
+            redis_client.rpush(mykey,timestamp+line)
         except Exception as e:
             return 'error:',e
     else:
@@ -40,3 +39,6 @@ def check_event_loop_status():
         print("ok")
     else:
         print("Event loop is not running.")
+
+def get_logger(request: Request):
+    return request.app.state.logger

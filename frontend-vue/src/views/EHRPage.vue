@@ -25,11 +25,6 @@
       <div v-if="selectedMethod !== null" class="actions">
         <h2>{{ currentMethods[selectedMethod].label }}</h2>
 
-        <!-- Method-specific Actions -->
-        <!-- <div v-for="(action, index) in methodActions" :key="index" class="action-button">
-          <button @click="executeAction(index)">{{ action.label }}</button>
-        </div> -->
-
 
       <!-- Parameter Form Zone -->
       <div class="parameter-form">
@@ -47,11 +42,12 @@
             <input type="file" @change="handleFileUpload" />
           </div>
         
+          <div class="action-group">
             <div v-for="(action, index) in methodActions" :key="index" class="action-button">
-                <button type="submit">{{ action.label }}</button>
-          <!-- <button @click="executeAction(index)">{{ action.label }}</button> -->
+                <!-- <button type="submit">{{ action.label }}</button> -->
+          <button @click="executeAction(action.action)">{{ action.label }}</button>
              </div>
-      
+          </div>
         </form>
       </div>
 
@@ -65,6 +61,9 @@
         <div class="results-content">
           <pre>{{ results }}</pre>
         </div>
+              <div v-if="isLoading" class="flex justify-center items-center ehr-spinner">
+                <Circle4Spinner  :size="'50px'" :background="'#48f791'"></Circle4Spinner>
+              </div>
       </div>
       </div>
     </div>
@@ -103,6 +102,7 @@ import CompositionInfoModal from '@/components/CompositionInfoModal.vue';
 import AQLInfoModal from '@/components/AQLInfoModal.vue';
 import { defineComponent } from "vue";
 import axios from 'axios';  // Import axios for making HTTP requests
+import Circle4Spinner from '@/components/ui/Circle4Spinner.vue';
 
 
 export default defineComponent({
@@ -115,10 +115,12 @@ export default defineComponent({
     TemplateInfoModal,
     CompositionInfoModal,
     AQLInfoModal,
+    Circle4Spinner,
   },
   data() {
     return {
       //for user info modal
+      isLoading:false,
       isUserInfoVisible: false,
       user: {
         name: localStorage.getItem("username") || "Can not find user",
@@ -191,8 +193,8 @@ export default defineComponent({
     // Get actions associated with the selected method
     getActionsForMethod(index) {
       const actions = [
-        [{ label: 'Submit' }],
-        [{ label: 'Action A' }, { label: 'Action B' }],
+        [{label : 'Clear Input',action: 'clear_ehrid'},{ label: 'Submit',action:'submit_ehrid' }],
+        [{label : 'Clear Input',action: 'clear_sid_sns'},{ label: 'Submit',action: 'submit_sid_sns' }],
         [{ label: 'Action X' }, { label: 'Action Y' }],
       ];
       return actions[index] || [];
@@ -204,8 +206,8 @@ export default defineComponent({
           { label: 'EHRid', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
         ],
         [
-          { label: 'Param A', value: '', type: 'text' , placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646"},
-          { label: 'Param B', value: '', type: 'number', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'SubjectId', value: '', type: 'text' , placeholder : "Patient1234"},
+          { label: 'SubjectNameSpace', value: '', type: 'text', placeholder : "Acme" },
         ],
         [
           { label: 'Param X', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
@@ -216,40 +218,66 @@ export default defineComponent({
     },
 
     // Handle action button click
-    async executeAction(index) {
-      this.results={}
-      if (index==0)//get ehr by ehrid
+    async executeAction(action) {
+      this.results=null
+      if (action=='submit_ehrid') //get ehr by ehrid
       {
         const ehrid= this.currentParams.find(p => p.label === 'EHRid');
         console.log(ehrid);
         if (ehrid.value) 
-        {
+        {         
           console.log('ehrid is',ehrid.value);
+          try {
           const ehrResults= await this.getehrbyehrid(ehrid.value);
           console.log('results',ehrResults);
           this.results=JSON.stringify(ehrResults,null,2);
+          }
+          catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
+          }
         }else{
-          this.results='EHRid is required'
+          this.results='EHRid is required';
         }  
-      } else if (index==1){
-        this.results = `Result for ${this.methodActions[index].label} will appear here.`;
-      } else if (index==2){
-        this.results = `Result for ${this.methodActions[index].label} will appear here.`;
-      } else if (index==3){
-        this.results = `Result for ${this.methodActions[index].label} will appear here.`;
-      } else if (index==4){
-        this.results = `Result for ${this.methodActions[index].label} will appear here.`;
-      } else{
-        this.results = `Result for ${this.methodActions[index].label} will appear here.`;
+      } else if (action=='submit_sid_sns')//get ehr by subjectid and subjectnamespace
+      {
+        const subjectid= this.currentParams.find(p => p.label === 'SubjectId');
+        const subjectnamespace= this.currentParams.find(p => p.label === 'SubjectNameSpace');
+        if (subjectid.value && subjectnamespace.value) 
+        { 
+          try{
+          const ehrResults= await this.getehrbysidandsns(subjectid.value,subjectnamespace.value);
+          console.log('results',ehrResults);
+          this.results=JSON.stringify(ehrResults,null,2);
+          }
+          catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        }  else{
+          this.results='SubjectId and SubjectNameSpace are required';
+        } 
+      } else if (action=='clear_ehrid' || action=='clear_sid_sns'){
+        this.currentParams.forEach(param => {param.value = '';});
+        this.results=null;
+      }
+      // } else if (index==2){
+      //   this.results = `Result for ${this.methodActions[index].label} will appear here.`;
+      // } else if (index==3){
+      //   this.results = `Result for ${this.methodActions[index].label} will appear here.`;
+      // } else if (index==4){
+      //   this.results = `Result for ${this.methodActions[index].label} will appear here.`;
+        else{
+        this.results =null;
       }
       
     },
 
     // Submit form with parameter values
-    submitForm() {
-      console.log("Form submitted");
-      this.executeAction(this.selectedMethod);
-    },
+    // submitForm() {
+    //   console.log("Form submitted");
+    //   this.executeAction(this.selectedMethod);
+    // },
 
     // Handle file upload
     handleFileUpload(event) {
@@ -483,10 +511,15 @@ export default defineComponent({
     closeAQLInfo() {
       this.isAQLInfoVisible = false;
     },
+    sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
     async getehrbyehrid(ehrid) {
       console.log('inside getehrbyehrid')
       console.log(ehrid)
       console.log(localStorage.getItem("authToken"))
+      this.isLoading=true;
+      await this.sleep(5000);
       try {
         console.log('before get')
         const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}`,
@@ -494,20 +527,8 @@ export default defineComponent({
           headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
            },
           timeout: 2000000,
-          }); 
-          console.log('after get')
-        if (response.status === 401) {
-          console.error("Unauthorized access. Please login again.");
-          this.logout();
-          return
-        }
-        if (response.status != 200) {
-          console.error("Error fetching data:", response);
-          return;
-        }
-          console.log('getehrbyehrid', response.data);
+          });
           return response.data.ehr;
-        
         } 
       catch (error) {
         console.error("Error in getehrbyehrid:", error);
@@ -516,11 +537,61 @@ export default defineComponent({
             console.error("Unauthorized access. Please login again.");
             this.logout();
             return
-          }          
+          }      
+          if (error.response.status == 404) {
+            return error.response.data;
+          }    
+        
+          if (error.response.status === 500) {
+            return error.response.data;
+        // throw { status: 500, message: "Server error" };
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
         }
-        return {'error':error}
-      }  
+      } finally {
+        this.isLoading=false;
+      }
+    }, 
+    async getehrbysidandsns(subjectid,subjectnamespace) {
+      console.log('inside getehrbysidandsns')
+      console.log(localStorage.getItem("authToken"))
+      console.log(subjectid)
+      console.log(subjectnamespace)
+      this.isLoading=true;
+      await this.sleep(5000);
+      try {
+        console.log('before get')
+        const response = await axios.get(`http://127.0.0.1:5000/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
+        {
+          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+           },
+          timeout: 2000000,
+          });
+          return response.data.ehr;
+        } 
+      catch (error) {
+        console.error("Error in getehrbysidandsns:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }      
+          if (error.response.status == 404) {
+            return error.response.data;
+          }    
+        
+          if (error.response.status === 500) {
+            return error.response.data;
+        // throw { status: 500, message: "Server error" };
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading=false;
+      }
     },    
+
   },
 });
 </script>
@@ -667,5 +738,11 @@ method-actions {
   justify-content: left;
   align-items: left;
   height: 100px;
+}
+
+.action-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
 </style>

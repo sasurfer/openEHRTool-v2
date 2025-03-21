@@ -1,5 +1,5 @@
 <template>
-  <div v-bind:style="styles" class="spinner spinner--circle-4"></div>
+  <div v-bind:style="styles" class="spinner spinner--circle-4-spinner"></div>
 </template>
 
 <script>
@@ -25,7 +25,7 @@ export default {
   box-sizing: border-box;
   position: relative;
   border: 3px solid transparent;
-  border-top-color: #f7484e;
+  border-top-color: #48f791;
   border-radius: 50%;
   animation: circle-4-spin 2s linear infinite;
 }

@@ -40,7 +40,7 @@ export default {
       errorMessage.value = ''; // Reset error message
 
       try {
-        const response = await axios.post('http://localhost:5000/login', {
+        const response = await axios.post('http://localhost:5000/auth/login', {
           username: username.value,
           password: password.value,
           url: url.value,

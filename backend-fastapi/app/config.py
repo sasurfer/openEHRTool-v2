@@ -3,7 +3,7 @@ import configparser
 
 class Config:
     SECRET_KEY='The Last of Us'
-    settingsfile='./configuration/openehrtool.cfg'
+    settingsfile='configuration/openehrtool.cfg'
 
 def get_config():
     settingsfile=Config.settingsfile
