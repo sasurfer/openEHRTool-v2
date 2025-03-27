@@ -23,7 +23,9 @@
  
       <!-- Method Actions Section -->
       <div v-if="selectedMethod !== null" class="actions">
-        <h2>{{ currentMethods[selectedMethod].label }}</h2>
+        <div class="method-title">
+          <h2>{{ currentMethods[selectedMethod].label }}</h2>
+        </div>"
 
 
       <!-- Parameter Form Zone -->
@@ -147,6 +149,9 @@ export default defineComponent({
       isLoadingTemplate: false,
       isLoadingComposition: false,
       isLoadingAQL: false,  
+      ehrid : '',
+      subjectid : '',
+      subjectnamespace : '',
     };
   },
   mounted() {
@@ -195,7 +200,7 @@ export default defineComponent({
       const actions = [
         [{label : 'Clear Input',action: 'clear_ehrid'},{ label: 'Submit',action:'submit_ehrid' }],
         [{label : 'Clear Input',action: 'clear_sid_sns'},{ label: 'Submit',action: 'submit_sid_sns' }],
-        [{ label: 'Action X' }, { label: 'Action Y' }],
+        [{ label: 'Clear Input',action : 'clear_ehrid'}, { label: 'Submit', action: 'submit_ehrid_post' }],
       ];
       return actions[index] || [];
     },
@@ -210,8 +215,7 @@ export default defineComponent({
           { label: 'SubjectNameSpace', value: '', type: 'text', placeholder : "Acme" },
         ],
         [
-          { label: 'Param X', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
-          { label: 'Param Y', value: '', type: 'number', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'EHRid (optional)', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
         ],
       ];
       return params[index] || [];
@@ -260,6 +264,21 @@ export default defineComponent({
       } else if (action=='clear_ehrid' || action=='clear_sid_sns'){
         this.currentParams.forEach(param => {param.value = '';});
         this.results=null;
+      } else if (action == 'submit_ehrid_post') {
+        const ehrid= this.currentParams.find(p => p.label === 'EHRid (optional)');
+        console.log('ehrid is',ehrid?.value);
+        this.ehrid= ehrid?.value || "";
+        console.log('ehrid is',this.ehrid);
+        try {
+        const ehrResults= await this.postehrbyehrid(this.ehrid);
+        console.log('results',ehrResults);
+        this.results=JSON.stringify(ehrResults,null,2);
+        }
+        catch (error) {
+        console.error("Error in executeAction:", error);
+        this.results = `Error: ${error.message}`;
+        }
+        
       }
       // } else if (index==2){
       //   this.results = `Result for ${this.methodActions[index].label} will appear here.`;
@@ -519,7 +538,7 @@ export default defineComponent({
       console.log(ehrid)
       console.log(localStorage.getItem("authToken"))
       this.isLoading=true;
-      await this.sleep(5000);
+      // await this.sleep(5000);
       try {
         console.log('before get')
         const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}`,
@@ -558,7 +577,7 @@ export default defineComponent({
       console.log(subjectid)
       console.log(subjectnamespace)
       this.isLoading=true;
-      await this.sleep(5000);
+      // await this.sleep(5000);
       try {
         console.log('before get')
         const response = await axios.get(`http://127.0.0.1:5000/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
@@ -591,7 +610,45 @@ export default defineComponent({
         this.isLoading=false;
       }
     },    
-
+    async postehrbyehrid(ehrid) {
+      console.log('inside postehrbyehrid')
+      console.log('ehrid=',ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading=true;
+      // await this.sleep(5000);
+      try {
+        console.log('before post')
+        const response = await axios.post(`http://127.0.0.1:5000/ehr/${ehrid}`,
+        {},
+        {
+          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+           },
+          timeout: 2000000,
+          });
+          return response.data.ehr;
+        } 
+      catch (error) {
+        console.error("Error in postehrbyehrid:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }      
+          if (error.response.status == 404) {
+            return error.response.data;
+          }    
+        
+          if (error.response.status === 500) {
+            return error.response.data;
+        // throw { status: 500, message: "Server error" };
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading=false;
+      }
+    }
   },
 });
 </script>
@@ -744,5 +801,9 @@ method-actions {
   display: flex;
   justify-content: center;
   gap: 10px;
+}
+
+.method-title {
+  background: #bad489
 }
 </style>

@@ -6,7 +6,9 @@ from app.dependencies.redis_dependency import get_redis_client
 from app.backend_redis.myredis import get_redis_status
 import redis
 from app.utils import get_logger
-from app.backend_ehrbase import fetch_get_data, fetch_post_data
+from app.backend_ehrbase import fetch_get_data, fetch_post_data, fetch_put_data, fetch_delete_data
+
+
 
 async def get_ehr_by_ehrid_ehrbase(request: Request,auth : str,url_base: str,ehrid: str):
     logger=get_logger(request)
@@ -40,4 +42,24 @@ async def get_ehr_by_sid_sns_ehrbase(request: Request,auth : str,url_base: str,s
             myresp['status']="success"
             myresp["ehr"]=json.loads(response.text)
             myresp['ehrid']=myresp['ehr']['ehr_id']['value']
+        return myresp
+    
+async def post_ehr_by_ehrid_ehrbase(request: Request,auth : str,url_base: str,ehrid: str):
+    logger=get_logger(request)
+    logger.debug('inside get_ehr_by_ehrid_ehrbase')
+    async with httpx.AsyncClient() as client:
+        myresp={}
+        headers={'Authorization':auth,'Content-Type':'application/JSON','Accept': 'application/json','Prefer': 'return={representation|minimal}'}
+        if ehrid:
+            myurl=url_normalize(url_base  + 'ehr/'+ehrid)
+            response = await fetch_put_data(client=client,url=myurl,headers=headers,timeout=20000)
+        else:
+            myurl=url_normalize(url_base  + 'ehr')
+            response = await fetch_post_data(client=client,url=myurl,headers=headers,timeout=20000 )
+        response.raise_for_status()  
+        myresp['status_code']=response.status_code
+        if 200 <= response.status_code < 210:
+            myresp['status']="success"
+            myresp["ehrid"]=response.headers['ETag'].replace('"','')
+            myresp['ehr']={'status':myresp['status'],'ehrid':myresp['ehrid']}
         return myresp
