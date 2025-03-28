@@ -55,7 +55,7 @@ async def get_dashboard_data_ehrbase(request: Request,auth : str,url_base: str,u
             metrics['compositionsCount']=len(compositions)
             #compute ehrsInUse,templatesInUse
             ehrs_in_use=set(r[0] for r in compositions)
-            metrics['ehrsInUse']=len(ehrs)
+            metrics['ehrsInUse']=len(ehrs_in_use)
             templates_in_use=set(r[2] for r in compositions)
             metrics['templatesInUse']=len(templates_in_use)
         else:

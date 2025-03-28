@@ -60,7 +60,6 @@ async def get_ehr_by_sid_sns(request: Request, subjectid: str, subjectnamespace:
 @router.post("/")
 async def post_ehr_by_ehrid_without(request: Request, redis_client: redis.StrictRedis = Depends(get_redis_client), token: str = Depends(get_token_from_header)):
     logger=get_logger(request)
-    logger.info('JJJJJJJJJJJJJ')
     logger.debug('inside post_ehr_by_ehrid without')
     auth = request.app.state.auth
     secret_key = request.app.state.secret_key

@@ -61,11 +61,16 @@
         <h3>Results</h3>
         <div class="results-container">
         <div class="results-content">
+              <div v-if="resultsOK" class="flex justify-center items-center" >
+                <button type="submit" @click="saveResultsToFile">Save Results to File</button>
+              </div>          
           <pre>{{ results }}</pre>
         </div>
               <div v-if="isLoading" class="flex justify-center items-center ehr-spinner">
                 <Circle4Spinner  :size="'50px'" :background="'#48f791'"></Circle4Spinner>
               </div>
+
+
       </div>
       </div>
     </div>
@@ -121,7 +126,8 @@ export default defineComponent({
   },
   data() {
     return {
-      //for user info modal
+      resultsOK:false,
+      resultsFile:{},
       isLoading:false,
       isUserInfoVisible: false,
       user: {
@@ -264,6 +270,7 @@ export default defineComponent({
       } else if (action=='clear_ehrid' || action=='clear_sid_sns'){
         this.currentParams.forEach(param => {param.value = '';});
         this.results=null;
+        this.resultsOK=false;
       } else if (action == 'submit_ehrid_post') {
         const ehrid= this.currentParams.find(p => p.label === 'EHRid (optional)');
         console.log('ehrid is',ehrid?.value);
@@ -533,11 +540,25 @@ export default defineComponent({
     sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     },
+    async saveResultsToFile() {
+      const content=this.results;
+      const blob = new Blob([content], { type: "application/json"  });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'results.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      // const blob = new Blob([content], { type: format === 'json' ? "application/json" : "application/xml" });
+    },
     async getehrbyehrid(ehrid) {
       console.log('inside getehrbyehrid')
       console.log(ehrid)
       console.log(localStorage.getItem("authToken"))
       this.isLoading=true;
+      this.resultsOK=false;
       // await this.sleep(5000);
       try {
         console.log('before get')
@@ -547,6 +568,7 @@ export default defineComponent({
            },
           timeout: 2000000,
           });
+          this.resultsOK=true;
           return response.data.ehr;
         } 
       catch (error) {
@@ -577,6 +599,7 @@ export default defineComponent({
       console.log(subjectid)
       console.log(subjectnamespace)
       this.isLoading=true;
+      this.resultsOK=false;
       // await this.sleep(5000);
       try {
         console.log('before get')
@@ -586,6 +609,7 @@ export default defineComponent({
            },
           timeout: 2000000,
           });
+          this.resultsOK=true;
           return response.data.ehr;
         } 
       catch (error) {
