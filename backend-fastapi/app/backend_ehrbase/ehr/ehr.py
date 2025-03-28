@@ -46,7 +46,7 @@ async def get_ehr_by_sid_sns_ehrbase(request: Request,auth : str,url_base: str,s
     
 async def post_ehr_by_ehrid_ehrbase(request: Request,auth : str,url_base: str,ehrid: str):
     logger=get_logger(request)
-    logger.debug('inside get_ehr_by_ehrid_ehrbase')
+    logger.debug('inside post_ehr_by_ehrid_ehrbase')
     async with httpx.AsyncClient() as client:
         myresp={}
         headers={'Authorization':auth,'Content-Type':'application/JSON','Accept': 'application/json','Prefer': 'return={representation|minimal}'}
@@ -56,6 +56,57 @@ async def post_ehr_by_ehrid_ehrbase(request: Request,auth : str,url_base: str,eh
         else:
             myurl=url_normalize(url_base  + 'ehr')
             response = await fetch_post_data(client=client,url=myurl,headers=headers,timeout=20000 )
+        response.raise_for_status()  
+        myresp['status_code']=response.status_code
+        if 200 <= response.status_code < 210:
+            myresp['status']="success"
+            myresp["ehrid"]=response.headers['ETag'].replace('"','')
+            myresp['ehr']={'status':myresp['status'],'ehrid':myresp['ehrid']}
+        return myresp
+    
+
+async def post_ehr_by_sid_sns_ehrbase(request: Request,auth : str,url_base: str,ehrid: str,subjectid: str,subjectnamespace: str):
+    logger=get_logger(request)
+    logger.debug('inside post_ehr_by_sid_sns_ehrbase')
+    body1='''
+    {
+    "_type" : "EHR_STATUS",
+    "name" : {
+        "_type" : "DV_TEXT",
+        "value" : "EHR Status"
+    },
+    "subject" : {
+        "_type" : "PARTY_SELF",
+        "external_ref" : {
+            "_type" : "PARTY_REF",
+    '''
+    body2=f'   "namespace" : "{subjectnamespace}",'
+    body3='''
+            "type" : "PERSON",
+            "id" : {
+            "_type" : "GENERIC_ID",
+    '''
+    body4=f'	"value" : "{subjectid}",\n'
+    body5='''
+          "scheme" : "id_scheme"
+            }
+        }
+    },
+    "archetype_node_id" : "openEHR-EHR-EHR_STATUS.generic.v1",
+    "is_modifiable" : true,
+    "is_queryable" : true
+    }
+    '''    
+    async with httpx.AsyncClient() as client:
+        myresp={}
+        headers={'Authorization':auth,'Content-Type':'application/JSON','Accept': 'application/json','Prefer': 'return={representation|minimal}'}
+        body=body1+body2+body3+body4+body5
+        if ehrid:
+            myurl=url_normalize(url_base  + 'ehr/'+ehrid)
+            response = await fetch_put_data(client=client,url=myurl,headers=headers,timeout=20000,data=body)
+        else:
+            myurl=url_normalize(url_base  + 'ehr')
+            response = await fetch_post_data(client=client,url=myurl,headers=headers,timeout=20000,data=body)
         response.raise_for_status()  
         myresp['status_code']=response.status_code
         if 200 <= response.status_code < 210:

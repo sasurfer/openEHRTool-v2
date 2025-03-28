@@ -184,6 +184,7 @@ export default defineComponent({
         ? { backgroundColor: '#bad489', color: 'white' } : {};
     },
     selectMethod(index) {
+      this.resultsOK=false;
       this.selectedMethod = index;
       this.methodActions = this.getActionsForMethod(index);
       this.currentParams = this.getParamsForMethod(index);
@@ -204,9 +205,10 @@ export default defineComponent({
     // Get actions associated with the selected method
     getActionsForMethod(index) {
       const actions = [
-        [{label : 'Clear Input',action: 'clear_ehrid'},{ label: 'Submit',action:'submit_ehrid' }],
-        [{label : 'Clear Input',action: 'clear_sid_sns'},{ label: 'Submit',action: 'submit_sid_sns' }],
-        [{ label: 'Clear Input',action : 'clear_ehrid'}, { label: 'Submit', action: 'submit_ehrid_post' }],
+        [{label : 'Clear Input',action: 'clear_all'},{ label: 'Submit',action:'submit_ehrid' }],
+        [{label : 'Clear Input',action: 'clear_all'},{ label: 'Submit',action: 'submit_sid_sns' }],
+        [{ label: 'Clear Input',action : 'clear_all'}, { label: 'Submit', action: 'submit_ehrid_post' }],
+        [{ label: 'Clear Input',action : 'clear_all'}, { label: 'Submit', action: 'submit_ehrid_sid_sns_post' }],
       ];
       return actions[index] || [];
     },
@@ -223,6 +225,10 @@ export default defineComponent({
         [
           { label: 'EHRid (optional)', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
         ],
+        [
+          { label: 'EHRid (optional)', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },{ label: 'SubjectId', value: '', type: 'text' , placeholder : "Patient1234"},
+          { label: 'SubjectNameSpace', value: '', type: 'text', placeholder : "Acme" },
+        ],        
       ];
       return params[index] || [];
     },
@@ -267,11 +273,12 @@ export default defineComponent({
         }  else{
           this.results='SubjectId and SubjectNameSpace are required';
         } 
-      } else if (action=='clear_ehrid' || action=='clear_sid_sns'){
+      } else if (action=='clear_all'){
         this.currentParams.forEach(param => {param.value = '';});
         this.results=null;
         this.resultsOK=false;
       } else if (action == 'submit_ehrid_post') {
+        this.resultsOK=false;
         const ehrid= this.currentParams.find(p => p.label === 'EHRid (optional)');
         console.log('ehrid is',ehrid?.value);
         this.ehrid= ehrid?.value || "";
@@ -286,15 +293,33 @@ export default defineComponent({
         this.results = `Error: ${error.message}`;
         }
         
+      } else if(action == 'submit_ehrid_sid_sns_post') {
+        this.resultsOK=false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid (optional)');
+        const subjectid = this.currentParams.find(p => p.label === 'SubjectId');
+        const subjectnamespace = this.currentParams.find(p => p.label === 'SubjectNameSpace');
+        console.log('ehrid is',ehrid?.value);
+        this.ehrid= ehrid?.value || "";
+        console.log('ehrid is',this.ehrid);
+        if (subjectid.value && subjectnamespace.value) 
+        { 
+            try {
+            const ehrResults= await this.postehrbysidsns(this.ehrid,subjectid.value,subjectnamespace.value);
+            console.log('results',ehrResults);
+            this.results=JSON.stringify(ehrResults,null,2);
+            }
+            catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+            }
+          }
+            else {
+              this.results='SubjectId and SubjectNameSpace are required';
+            }        
       }
-      // } else if (index==2){
-      //   this.results = `Result for ${this.methodActions[index].label} will appear here.`;
-      // } else if (index==3){
-      //   this.results = `Result for ${this.methodActions[index].label} will appear here.`;
-      // } else if (index==4){
-      //   this.results = `Result for ${this.methodActions[index].label} will appear here.`;
         else{
         this.results =null;
+        this.resultsOK=false;
       }
       
     },
@@ -639,6 +664,7 @@ export default defineComponent({
       console.log('ehrid=',ehrid)
       console.log(localStorage.getItem("authToken"))
       this.isLoading=true;
+      this.resultsOK=false;
       // await this.sleep(5000);
       try {
         console.log('before post')
@@ -672,7 +698,58 @@ export default defineComponent({
       } finally {
         this.isLoading=false;
       }
-    }
+    },
+    async postehrbysidsns(ehrid,subjectid,subjectnamespace) {
+      console.log('inside postehrbysidsns')
+      console.log('ehrid=',ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading=true;
+      this.resultsOK=false;
+      // await this.sleep(5000);
+      try {
+        console.log('before post')
+        if (ehrid) {
+          const response = await axios.post(`http://127.0.0.1:5000/ehr/${ehrid}/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
+        {},
+        {
+          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+           },
+          timeout: 2000000,
+          });
+          return response.data.ehr;
+        }else{
+          const response = await axios.post(`http://127.0.0.1:5000/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
+        {},
+        {
+          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+           },
+          timeout: 2000000,
+          });
+          return response.data.ehr;
+        }
+      }
+      catch (error) {
+        console.error("Error in postehrbysidsns:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }      
+          if (402 <= error.response.status < 500) {
+            return error.response.data;
+          }    
+        
+          if (error.response.status === 500) {
+            return error.response.data;
+        // throw { status: 500, message: "Server error" };
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading=false;
+      }
+    }    
   },
 });
 </script>

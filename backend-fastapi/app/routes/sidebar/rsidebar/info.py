@@ -10,9 +10,9 @@ router = APIRouter()
 async def get_sidebar_ehrs(request: Request, token: str = Depends(get_token_from_header)):
     logger = get_logger(request)
     logger.debug('inside get_sidebar_ehrs')
-    auth = request.app.state.auth
-    secret_key = request.app.state.secret_key
-    if not verify_jwt_token(token, secret_key) or not auth:
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
         url_base = request.app.state.url_base
@@ -26,9 +26,9 @@ async def get_sidebar_ehrs(request: Request, token: str = Depends(get_token_from
 async def get_sidebar_templates(request: Request, token: str = Depends(get_token_from_header)):
     logger = get_logger(request)
     logger.debug('inside get_sidebar_templates')
-    auth = request.app.state.auth
-    secret_key = request.app.state.secret_key
-    if not verify_jwt_token(token, secret_key) or not auth:
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
         url_base = request.app.state.url_base
@@ -42,9 +42,9 @@ async def get_sidebar_templates(request: Request, token: str = Depends(get_token
 async def get_sidebar_compositions(request: Request, token: str = Depends(get_token_from_header)):
     logger = get_logger(request)
     logger.debug('inside get_sidebar_compositions')
-    auth = request.app.state.auth
-    secret_key = request.app.state.secret_key
-    if not verify_jwt_token(token, secret_key) or not auth:
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
         url_base = request.app.state.url_base
@@ -58,9 +58,9 @@ async def get_sidebar_compositions(request: Request, token: str = Depends(get_to
 async def get_sidebar_queries(request: Request, token: str = Depends(get_token_from_header)):
     logger = get_logger(request)
     logger.debug('inside get_sidebar_queries')
-    auth = request.app.state.auth
-    secret_key = request.app.state.secret_key
-    if not verify_jwt_token(token, secret_key) or not auth:
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
         url_base = request.app.state.url_base
