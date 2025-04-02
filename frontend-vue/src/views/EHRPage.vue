@@ -7,94 +7,112 @@
     <UserInfoModal v-if="isUserInfoVisible" :isVisible="isUserInfoVisible" :user="user" @close-modal="closeModal"
       @logout="logout" />
 
-      <div class="method-selection-zone">
-        <h3><i>EHR Methods</i></h3>
+    <div class="method-selection-zone">
+      <h3><i>EHR Methods</i></h3>
       <!-- Only show methods if it's not the Home page -->
       <!-- <div v-if="!isHomePage"> -->
-        <div v-for="(method, index) in currentMethods" :key="index" class="method-item" :style="getMethodStyle(index)">
+      <label>
+        <input type="radio" v-model="methodType" value="Get" />
+        Get
+      </label>
+      <label>
+        <input type="radio" v-model="methodType" value="Post/Put" />
+        Post/Put
+      </label>
+      <!-- <div v-for="(method, index) in currentMethods" :key="index" class="method-item" :style="getMethodStyle(index)">
+          <div v-if="method.type === methodType">
           <button @click="selectMethod(index)">{{ method.label }}</button>
-        </div>
+          </div>
+        </div> -->
+
+      <div v-for="(method, index) in filteredMethods" :key="index" class="method-item" :style="getMethodStyle(index)">
+        <button @click="selectMethod(index)">{{ method.label }}</button>
+      </div>
+
+      <!-- class="method-item" :style="getMethodStyle(index)">
+          <button @click="selectMethod(index)" :class="{ selected: selectedMethodIndex === index }" >{{ method.label }}</button>
+        </div> -->
+
+
       <!-- </div> -->
     </div>
 
 
     <div class="main-content">
       <!-- Your main content goes here -->
- 
+
       <!-- Method Actions Section -->
       <div v-if="selectedMethod !== null" class="actions">
         <div class="method-title">
-          <h2>{{ currentMethods[selectedMethod].label }}</h2>
-        </div>"
-
-
-      <!-- Parameter Form Zone -->
-      <div class="parameter-form">
-        <div class="parameters-title">
-        <h3>Input Parameters</h3>
+          <h2>{{ filteredMethods[selectedMethod].label }}</h2>
         </div>
-        <form @submit.prevent="submitForm">
-          <div v-for="(param, index) in currentParams" :key="index" class="form-group">
-            <label>{{ param.label }}:</label>
-            <input v-model="param.value" :type="param.type" :placeholder="param.placeholder" />
-          </div>
 
-          <div v-if="currentFile" class="file-input">
-            <label>Upload File:</label>
-            <input type="file" @change="handleFileUpload" />
+
+        <!-- Parameter Form Zone -->
+        <div class="parameter-form">
+          <div class="parameters-title">
+            <h3>Input Parameters</h3>
           </div>
-        
-          <div class="action-group">
-            <div v-for="(action, index) in methodActions" :key="index" class="action-button">
+          <form @submit.prevent="submitForm">
+            <div v-for="(param, index) in currentParams" :key="index" class="form-group">
+              <label>{{ param.label }}:</label>
+              <input v-model="param.value" :type="param.type" :placeholder="param.placeholder" />
+            </div>
+
+            <div v-if="currentFile" class="file-input">
+              <label>{{ labelFile }}</label>
+              <input type="file" ref="fileInput" @change="handleFileUpload" />
+            </div>
+
+            <div class="action-group">
+              <div v-for="(action, index) in methodActions" :key="index" class="action-button">
                 <!-- <button type="submit">{{ action.label }}</button> -->
-          <button @click="executeAction(action.action)">{{ action.label }}</button>
-             </div>
-          </div>
-        </form>
-      </div>
-
-     <!-- Separator Line between Top and Results -->
-     <div class="separator"></div>
-
-      <!-- Results Section -->
-      <div class="results-section">
-        <h3>Results</h3>
-        <div class="results-container">
-        <div class="results-content">
-              <div v-if="resultsOK" class="flex justify-center items-center" >
-                <button type="submit" @click="saveResultsToFile">Save Results to File</button>
-              </div>          
-          <pre>{{ results }}</pre>
-        </div>
-              <div v-if="isLoading" class="flex justify-center items-center ehr-spinner">
-                <Circle4Spinner  :size="'50px'" :background="'#48f791'"></Circle4Spinner>
+                <button @click="executeAction(action.action)">{{ action.label }}</button>
               </div>
+            </div>
+          </form>
+        </div>
 
+        <!-- Separator Line between Top and Results -->
+        <div class="separator"></div>
+
+        <!-- Results Section -->
+        <div class="results-section">
+          <h3>Results</h3>
+          <div class="results-container">
+            <div class="results-content">
+              <div v-if="resultsOK" class="flex justify-center items-center">
+                <button type="submit" @click="saveResultsToFile">Save Results to File</button>
+              </div>
+              <pre>{{ results }}</pre>
+            </div>
+            <div v-if="isLoading" class="flex justify-center items-center ehr-spinner">
+              <Circle4Spinner :size="'50px'" :background="'#48f791'"></Circle4Spinner>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+      <div v-else class="no-method">
+        <svg width="40" height="40" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" transform="translate(0, 5)">
+          <path d="M40 25H10m0 0l7-7m-7 7l7 7" stroke="black" stroke-width="3" fill="none" />
+        </svg>
+        <p>Please select a method from the left methods menu.</p>
 
       </div>
-      </div>
     </div>
-    <div v-else class="no-method">
-      <svg width="40" height="40" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" transform="translate(0, 5)">
-        <path d="M40 25H10m0 0l7-7m-7 7l7 7" stroke="black" stroke-width="3" fill="none"/>
-      </svg>
-      <p>Please select a method from the left methods menu.</p>
 
-    </div>
-    </div>
- 
-    
+
     <EHRInfoModal v-if="isEHRInfoVisible" :isVisible="isEHRInfoVisible" :ehrData="ehrData"
       @close-ehr-modal="closeEHRInfo" :isLoading="isLoadingEHR" />
     <TemplateInfoModal v-if="isTemplateInfoVisible" :isVisible="isTemplateInfoVisible" :templateData="templateData"
-      @close-template-modal="closeTemplateInfo" 
-      :isLoading="isLoadingTemplate" />
+      @close-template-modal="closeTemplateInfo" :isLoading="isLoadingTemplate" />
     <CompositionInfoModal v-if="isCompositionInfoVisible" :isVisible="isCompositionInfoVisible"
-      :compositionData="compositionData" @close-composition-modal="closeCompositionInfo" 
+      :compositionData="compositionData" @close-composition-modal="closeCompositionInfo"
       :isLoading="isLoadingComposition" />
     <AQLInfoModal v-if="isAQLInfoVisible" :isVisible="isAQLInfoVisible" :aqlData="aqlData"
-      @close-aql-modal="closeAQLInfo" 
-      :isLoading="isLoadingAQL" />
+      @close-aql-modal="closeAQLInfo" :isLoading="isLoadingAQL" />
   </div>
 </template>
 
@@ -126,9 +144,10 @@ export default defineComponent({
   },
   data() {
     return {
-      resultsOK:false,
-      resultsFile:{},
-      isLoading:false,
+      methodType: "Get",
+      resultsOK: false,
+      resultsFile: {},
+      isLoading: false,
       isUserInfoVisible: false,
       user: {
         name: localStorage.getItem("username") || "Can not find user",
@@ -150,15 +169,23 @@ export default defineComponent({
       currentMethods: [],
       currentParams: [],
       currentFile: false,
-      results: null,      
+      labelFile: null,
+      results: null,
       isLoadingEHR: false,
       isLoadingTemplate: false,
       isLoadingComposition: false,
-      isLoadingAQL: false,  
-      ehrid : '',
-      subjectid : '',
-      subjectnamespace : '',
+      isLoadingAQL: false,
+      ehrid: '',
+      subjectid: '',
+      subjectnamespace: '',
+      selectedFile: null,
+      // selectedMethodIndex: null,
     };
+  },
+  computed: {
+    filteredMethods() {
+      return this.currentMethods.filter(method => method.type === this.methodType);
+    }
   },
   mounted() {
     // Fetch data when the component is first mounted
@@ -166,7 +193,7 @@ export default defineComponent({
     this.fetchTemplateData();
     this.fetchCompositionData();
     this.fetchAQLData();
-    this.currentMethods=this.getMethodsForEHR();
+    this.currentMethods = this.getMethodsForEHR();
   },
   watch: {
     '$route'() {
@@ -176,27 +203,69 @@ export default defineComponent({
       this.fetchCompositionData();
       this.fetchAQLData();
     },
+    methodType() {
+      // this.selectedMethodIndex=null;
+      this.selectedMethod = null;
+    }
   },
   methods: {
-    // Get dynamic styles for the method
     getMethodStyle(index) {
       return index === this.selectedMethod
         ? { backgroundColor: '#bad489', color: 'white' } : {};
     },
+    getIndexByType(arr, targetIndex, type) {
+      let count = 0;
+      for (let i = 0; i < arr.length; i++) {
+        if (arr[i].type === type) {
+          if (targetIndex === count) {
+            return i;
+          }
+          count++;
+        }
+      }
+      return -1; // Return -1 if no element with the specified type is found.
+    },
+    getNeedFile(index) {
+      const needFile = [
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: true, label: 'Choose EHRStatus File' },
+        { file: true, label: 'Choose EHRStatus File' },
+        { file: false, label: '' },
+      ];
+      return needFile[index] || { file: false, label: '' };
+    },
     selectMethod(index) {
-      this.resultsOK=false;
+      this.resultsOK = false;
+      this.currentMethods = this.getMethodsForEHR();
+      const index2 = this.getIndexByType(this.currentMethods, index, this.methodType)
+      console.log("index", index)
+      console.log("index2", index2)
       this.selectedMethod = index;
-      this.methodActions = this.getActionsForMethod(index);
-      this.currentParams = this.getParamsForMethod(index);
+      // this.selectedMethodIndex = index;
+      this.methodActions = this.getActionsForMethod(index2);
+      this.currentParams = this.getParamsForMethod(index2);
+      this.needFile = this.getNeedFile(index2);
+      this.currentFile = this.needFile.file;
+      this.labelFile = this.needFile.label;
+      console.log('currentfile', this.currentFile);
+      console.log('labelFile', this.labelFile);
       this.results = null; // Reset results
     },
     getMethodsForEHR() {
       const methods = {
-        'methods':[
-          { label: 'Get EHR by EHRid' },
-          { label: 'Get EHR by SubjectId, SubjectNameSpace' },
-          { label: 'Post EHR with/without EHRid specified' },
-          { label: 'Post EHR with SubjectId, SubjectNameSpace specified' },
+        'methods': [
+          { label: 'Get EHR by EHRid', type: 'Get' },
+          { label: 'Get EHR by SubjectId, SubjectNameSpace', type: 'Get' },
+          { label: 'Post EHR with/without EHRid specified', type: 'Post/Put' },
+          { label: 'Post EHR with SubjectId, SubjectNameSpace specified', type: 'Post/Put' },
+          { label: 'Post EHR with EHRStatus', type: 'Post/Put' },
+          { label: 'Update EHRStatus', type: 'Post/Put' },
+          { label: 'Get EHRStatus at time', type: 'Get' },
+          { label: 'Get EHRStatus by version', type: 'Get' },
+          { label: 'Get versioned EHRStatus', type: 'Get' }
         ]
       };
       return methods['methods'] || [];
@@ -205,10 +274,12 @@ export default defineComponent({
     // Get actions associated with the selected method
     getActionsForMethod(index) {
       const actions = [
-        [{label : 'Clear Input',action: 'clear_all'},{ label: 'Submit',action:'submit_ehrid' }],
-        [{label : 'Clear Input',action: 'clear_all'},{ label: 'Submit',action: 'submit_sid_sns' }],
-        [{ label: 'Clear Input',action : 'clear_all'}, { label: 'Submit', action: 'submit_ehrid_post' }],
-        [{ label: 'Clear Input',action : 'clear_all'}, { label: 'Submit', action: 'submit_ehrid_sid_sns_post' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_sid_sns' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid_post' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid_sid_sns_post' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_update' }],
       ];
       return actions[index] || [];
     },
@@ -216,112 +287,193 @@ export default defineComponent({
     getParamsForMethod(index) {
       const params = [
         [
-          { label: 'EHRid', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          // { label: '1 GET', value: "", type: 'text' }
         ],
         [
-          { label: 'SubjectId', value: '', type: 'text' , placeholder : "Patient1234"},
-          { label: 'SubjectNameSpace', value: '', type: 'text', placeholder : "Acme" },
+          { label: 'SubjectId', value: '', type: 'text', placeholder: "Patient1234" },
+          { label: 'SubjectNameSpace', value: '', type: 'text', placeholder: "Acme" },
+          // { label: '2 GET', value: "", type: 'text' }
         ],
         [
-          { label: 'EHRid (optional)', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'EHRid (optional)', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          // { label: '1 POST', value: "", type: 'text' }
         ],
         [
-          { label: 'EHRid (optional)', value: '', type: 'text', placeholder : "56e46cce-d8c9-4db8-940b-ee3db170a646" },{ label: 'SubjectId', value: '', type: 'text' , placeholder : "Patient1234"},
-          { label: 'SubjectNameSpace', value: '', type: 'text', placeholder : "Acme" },
-        ],        
+          { label: 'EHRid (optional)', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'SubjectId', value: '', type: 'text', placeholder: "Patient1234" },
+          { label: 'SubjectNameSpace', value: '', type: 'text', placeholder: "Acme" },
+          // { label: '2 POST', value: "", type: 'text' }
+        ],
+        [],
+        [],
+
+
+
       ];
       return params[index] || [];
     },
 
     // Handle action button click
     async executeAction(action) {
-      this.results=null
-      if (action=='submit_ehrid') //get ehr by ehrid
+      this.results = null
+      if (action == 'submit_ehrid') //get ehr by ehrid
       {
-        const ehrid= this.currentParams.find(p => p.label === 'EHRid');
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
         console.log(ehrid);
-        if (ehrid.value) 
-        {         
-          console.log('ehrid is',ehrid.value);
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
           try {
-          const ehrResults= await this.getehrbyehrid(ehrid.value);
-          console.log('results',ehrResults);
-          this.results=JSON.stringify(ehrResults,null,2);
-          }
-          catch (error) {
-          console.error("Error in executeAction:", error);
-          this.results = `Error: ${error.message}`;
-          }
-        }else{
-          this.results='EHRid is required';
-        }  
-      } else if (action=='submit_sid_sns')//get ehr by subjectid and subjectnamespace
-      {
-        const subjectid= this.currentParams.find(p => p.label === 'SubjectId');
-        const subjectnamespace= this.currentParams.find(p => p.label === 'SubjectNameSpace');
-        if (subjectid.value && subjectnamespace.value) 
-        { 
-          try{
-          const ehrResults= await this.getehrbysidandsns(subjectid.value,subjectnamespace.value);
-          console.log('results',ehrResults);
-          this.results=JSON.stringify(ehrResults,null,2);
+            const ehrResults = await this.getehrbyehrid(ehrid.value);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
           }
           catch (error) {
             console.error("Error in executeAction:", error);
             this.results = `Error: ${error.message}`;
           }
-        }  else{
-          this.results='SubjectId and SubjectNameSpace are required';
-        } 
-      } else if (action=='clear_all'){
-        this.currentParams.forEach(param => {param.value = '';});
-        this.results=null;
-        this.resultsOK=false;
-      } else if (action == 'submit_ehrid_post') {
-        this.resultsOK=false;
-        const ehrid= this.currentParams.find(p => p.label === 'EHRid (optional)');
-        console.log('ehrid is',ehrid?.value);
-        this.ehrid= ehrid?.value || "";
-        console.log('ehrid is',this.ehrid);
+        } else {
+          this.results = 'EHRid is required';
+        }
+      } else if (action == 'submit_sid_sns')//get ehr by subjectid and subjectnamespace
+      {
+        const subjectid = this.currentParams.find(p => p.label === 'SubjectId');
+        const subjectnamespace = this.currentParams.find(p => p.label === 'SubjectNameSpace');
+        if (subjectid.value && subjectnamespace.value) {
+          try {
+            const ehrResults = await this.getehrbysidandsns(subjectid.value, subjectnamespace.value);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
+          }
+          catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'SubjectId and SubjectNameSpace are required';
+        }
+      } else if (action == 'clear_all') {
+        this.currentParams.forEach(param => { param.value = ''; });
+        this.results = null;
+        this.resultsOK = false;
+        this.selectedFile = null;
+        const fileInput = this.$refs.fileInput;
+        if (fileInput) {
+          fileInput.value = null;
+        }
+        this.subjectid = '';
+        this.subjectnamespace = '';
+        this.ehrid = '';
+      } else if (action == 'submit_ehrid_post') //Post ehr with/without ehrid
+      {
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid (optional)');
+        console.log('ehrid is', ehrid?.value);
+        this.ehrid = ehrid?.value || "";
+        console.log('ehrid is', this.ehrid);
         try {
-        const ehrResults= await this.postehrbyehrid(this.ehrid);
-        console.log('results',ehrResults);
-        this.results=JSON.stringify(ehrResults,null,2);
+          const ehrResults = await this.postehrbyehrid(this.ehrid);
+          console.log('results', ehrResults);
+          this.results = JSON.stringify(ehrResults, null, 2);
         }
         catch (error) {
-        console.error("Error in executeAction:", error);
-        this.results = `Error: ${error.message}`;
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
         }
-        
-      } else if(action == 'submit_ehrid_sid_sns_post') {
-        this.resultsOK=false;
+
+      } else if (action == 'submit_ehrid_sid_sns_post') //Post ehr with/without ehrid with subjectid and subjectnamespace
+      {
+        this.resultsOK = false;
         const ehrid = this.currentParams.find(p => p.label === 'EHRid (optional)');
         const subjectid = this.currentParams.find(p => p.label === 'SubjectId');
         const subjectnamespace = this.currentParams.find(p => p.label === 'SubjectNameSpace');
-        console.log('ehrid is',ehrid?.value);
-        this.ehrid= ehrid?.value || "";
-        console.log('ehrid is',this.ehrid);
-        if (subjectid.value && subjectnamespace.value) 
-        { 
-            try {
-            const ehrResults= await this.postehrbysidsns(this.ehrid,subjectid.value,subjectnamespace.value);
-            console.log('results',ehrResults);
-            this.results=JSON.stringify(ehrResults,null,2);
-            }
-            catch (error) {
+        console.log('ehrid is', ehrid?.value);
+        this.ehrid = ehrid?.value || "";
+        console.log('ehrid is', this.ehrid);
+        if (subjectid.value && subjectnamespace.value) {
+          try {
+            const ehrResults = await this.postehrbysidsns(this.ehrid, subjectid.value, subjectnamespace.value);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
+          }
+          catch (error) {
             console.error("Error in executeAction:", error);
             this.results = `Error: ${error.message}`;
-            }
           }
-            else {
-              this.results='SubjectId and SubjectNameSpace are required';
-            }        
+        }
+        else {
+          this.results = 'SubjectId and SubjectNameSpace are required';
+        }
+      } else if (action == 'submit_ehrstatus') //post ehr with ehrstatus
+      {
+        console.log('inside submit_ehrstatus')
+        this.resultsOK = false;
+        if (!this.selectedFile) {
+          this.results = 'Please select an EHRStatus file'
+          return;
+        }
+        try {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            try {
+              const ehrstatus = JSON.parse(reader.result);
+              console.log('ehrstatus is', ehrstatus);
+              const ehrResults = await this.postehrstatus(ehrstatus);
+              console.log('results', ehrResults);
+              this.results = JSON.stringify(ehrResults, null, 2);
+            }
+            catch (error) {
+              console.error("Error uploading JSON file:", error);
+              this.results = `Error: ${error.message}`;
+            }
+          };
+          reader.readAsText(this.selectedFile);
+        }
+        catch (error2) {
+          console.error("Error in postehrstatus:", error2);
+          this.results = `Error: ${error2.message}`;
+        }
       }
-        else{
-        this.results =null;
-        this.resultsOK=false;
+      else if (action == 'submit_ehrstatus_update') //update ehrstatus
+      {
+        console.log('inside submit_ehrstatus_update')
+        this.resultsOK = false;
+        if (!this.selectedFile) {
+          this.results = 'Please select an EHRStatus file'
+          return;
+        }
+        try {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            try {
+              const ehrstatus = JSON.parse(reader.result);
+              const ehrResults = await this.putehrstatus(ehrstatus);
+              console.log('results', ehrResults);
+              this.results = JSON.stringify(ehrResults, null, 2);
+            }
+            catch (error) {
+              console.error("Error uploading JSON file:", error);
+              this.results = `Error: ${error.message}`;
+            }
+          };
+          reader.readAsText(this.selectedFile);
+        }
+        catch (error2) {
+          console.error("Error in putehrstatus:", error2);
+          this.results = `Error: ${error2.message}`;
+        }
       }
-      
+
+
+
+
+
+
+      else {
+        this.results = null;
+        this.resultsOK = false;
+      }
+
+
     },
 
     // Submit form with parameter values
@@ -333,8 +485,8 @@ export default defineComponent({
     // Handle file upload
     handleFileUpload(event) {
       const file = event.target.files[0];
+      this.selectedFile = file;
       console.log('File selected:', file);
-      this.currentFile = file.name;
     },
 
     //for user info modal
@@ -359,7 +511,7 @@ export default defineComponent({
         this.isLoadingEHR = true;
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/ehrs',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 }); 
+          { timeout: 2000000 });
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -406,7 +558,7 @@ export default defineComponent({
         this.isLoadingTemplate = true;
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/templates',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 }); 
+          { timeout: 2000000 });
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -420,7 +572,7 @@ export default defineComponent({
         console.log(response)
         const templateData = response.data.templates;
         this.templateData = templateData;
-        console.log('this.templateData', this.templateData); 
+        console.log('this.templateData', this.templateData);
       } catch (error) {
         console.error("Error fetching templates:", error);
         if (error?.response?.status) {
@@ -461,14 +613,14 @@ export default defineComponent({
     toggleCompositionInfoModal() {
       this.isCompositionInfoVisible = !this.isCompositionInfoVisible;
     },
-    
-      // Fetch composition data here
+
+    // Fetch composition data here
     async fetchCompositionData() {
       try {
         this.isLoadingComposition = true;
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/compositions',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 }); 
+          { timeout: 2000000 });
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -481,7 +633,7 @@ export default defineComponent({
         console.log(response)
         const compositionData = response.data.compositions;
         this.compositionData = compositionData;
-        console.log('this.compositionData', this.compositionData); 
+        console.log('this.compositionData', this.compositionData);
       } catch (error) {
         console.error("Error fetching compositions:", error);
         if (error?.response?.status) {
@@ -493,8 +645,8 @@ export default defineComponent({
         }
       } finally {
         this.isLoadingComposition = false;
-      }        
-//      this.compositionData = ['composition1', 'composition2', 'composition3', 'composition4', 'composition5', 'composition6', 'composition7', 'composition8', 'composition9', 'composition10'];
+      }
+      //      this.compositionData = ['composition1', 'composition2', 'composition3', 'composition4', 'composition5', 'composition6', 'composition7', 'composition8', 'composition9', 'composition10'];
       return this.compositionData;
     },
     async openCompositionInfo() {
@@ -515,7 +667,7 @@ export default defineComponent({
         this.isLoadingAQL = true;
         const response = await axios.get('http://127.0.0.1:5000/rsidebar/queries',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 }); 
+          { timeout: 2000000 });
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -527,7 +679,7 @@ export default defineComponent({
         }
         const aqlData = response.data.queries;
         this.aqlData = aqlData;
-        console.log('this.aqlData', this.aqlData); 
+        console.log('this.aqlData', this.aqlData);
       } catch (error) {
         console.error("Error fetching queries:", error);
         if (error?.response?.status) {
@@ -537,10 +689,10 @@ export default defineComponent({
             return
           }
         }
-      }    
+      }
       finally {
         this.isLoadingAQL = false;
-      }   
+      }
       // this.aqlData = [{ 'name': 'org.ehrbase.local:aql1', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
       // { 'name': 'org.ehrbase.local:aql2', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
       // { 'name': 'org.ehrbase.local:aql3', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
@@ -566,8 +718,8 @@ export default defineComponent({
       return new Promise(resolve => setTimeout(resolve, ms));
     },
     async saveResultsToFile() {
-      const content=this.results;
-      const blob = new Blob([content], { type: "application/json"  });
+      const content = this.results;
+      const blob = new Blob([content], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -582,20 +734,21 @@ export default defineComponent({
       console.log('inside getehrbyehrid')
       console.log(ehrid)
       console.log(localStorage.getItem("authToken"))
-      this.isLoading=true;
-      this.resultsOK=false;
+      this.isLoading = true;
+      this.resultsOK = false;
       // await this.sleep(5000);
       try {
         console.log('before get')
         const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}`,
-        {
-          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
-           },
-          timeout: 2000000,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
           });
-          this.resultsOK=true;
-          return response.data.ehr;
-        } 
+        this.resultsOK = true;
+        return response.data.ehr;
+      }
       catch (error) {
         console.error("Error in getehrbyehrid:", error);
         if (error?.response?.status) {
@@ -603,40 +756,37 @@ export default defineComponent({
             console.error("Unauthorized access. Please login again.");
             this.logout();
             return
-          }      
-          if (error.response.status == 404) {
-            return error.response.data;
-          }    
-        
-          if (error.response.status === 500) {
-            return error.response.data;
-        // throw { status: 500, message: "Server error" };
           }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
           throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
         }
       } finally {
-        this.isLoading=false;
+        this.isLoading = false;
       }
-    }, 
-    async getehrbysidandsns(subjectid,subjectnamespace) {
+    },
+    async getehrbysidandsns(subjectid, subjectnamespace) {
       console.log('inside getehrbysidandsns')
       console.log(localStorage.getItem("authToken"))
       console.log(subjectid)
       console.log(subjectnamespace)
-      this.isLoading=true;
-      this.resultsOK=false;
+      this.isLoading = true;
+      this.resultsOK = false;
       // await this.sleep(5000);
       try {
         console.log('before get')
         const response = await axios.get(`http://127.0.0.1:5000/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
-        {
-          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
-           },
-          timeout: 2000000,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
           });
-          this.resultsOK=true;
-          return response.data.ehr;
-        } 
+        this.resultsOK = true;
+        return response.data.ehr;
+      }
       catch (error) {
         console.error("Error in getehrbysidandsns:", error);
         if (error?.response?.status) {
@@ -644,39 +794,35 @@ export default defineComponent({
             console.error("Unauthorized access. Please login again.");
             this.logout();
             return
-          }      
-          if (error.response.status == 404) {
+          }
+          if (402 <= error.response.status <= 500) {
             return error.response.data;
-          }    
-        
-          if (error.response.status === 500) {
-            return error.response.data;
-        // throw { status: 500, message: "Server error" };
           }
           throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
         }
       } finally {
-        this.isLoading=false;
+        this.isLoading = false;
       }
-    },    
+    },
     async postehrbyehrid(ehrid) {
       console.log('inside postehrbyehrid')
-      console.log('ehrid=',ehrid)
+      console.log('ehrid=', ehrid)
       console.log(localStorage.getItem("authToken"))
-      this.isLoading=true;
-      this.resultsOK=false;
+      this.isLoading = true;
+      this.resultsOK = false;
       // await this.sleep(5000);
       try {
         console.log('before post')
         const response = await axios.post(`http://127.0.0.1:5000/ehr/${ehrid}`,
-        {},
-        {
-          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
-           },
-          timeout: 2000000,
+          {},
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
           });
-          return response.data.ehr;
-        } 
+        return response.data.ehr;
+      }
       catch (error) {
         console.error("Error in postehrbyehrid:", error);
         if (error?.response?.status) {
@@ -684,47 +830,44 @@ export default defineComponent({
             console.error("Unauthorized access. Please login again.");
             this.logout();
             return
-          }      
-          if (error.response.status == 404) {
+          }
+          if (402 <= error.response.status <= 500) {
             return error.response.data;
-          }    
-        
-          if (error.response.status === 500) {
-            return error.response.data;
-        // throw { status: 500, message: "Server error" };
           }
           throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
         }
       } finally {
-        this.isLoading=false;
+        this.isLoading = false;
       }
     },
-    async postehrbysidsns(ehrid,subjectid,subjectnamespace) {
+    async postehrbysidsns(ehrid, subjectid, subjectnamespace) {
       console.log('inside postehrbysidsns')
-      console.log('ehrid=',ehrid)
+      console.log('ehrid=', ehrid)
       console.log(localStorage.getItem("authToken"))
-      this.isLoading=true;
-      this.resultsOK=false;
+      this.isLoading = true;
+      this.resultsOK = false;
       // await this.sleep(5000);
       try {
         console.log('before post')
         if (ehrid) {
           const response = await axios.post(`http://127.0.0.1:5000/ehr/${ehrid}/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
-        {},
-        {
-          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
-           },
-          timeout: 2000000,
-          });
+            {},
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+              },
+              timeout: 2000000,
+            });
           return response.data.ehr;
-        }else{
+        } else {
           const response = await axios.post(`http://127.0.0.1:5000/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
-        {},
-        {
-          headers :  { 'Authorization': `Bearer ${localStorage.getItem("authToken")}`
-           },
-          timeout: 2000000,
-          });
+            {},
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+              },
+              timeout: 2000000,
+            });
           return response.data.ehr;
         }
       }
@@ -735,21 +878,102 @@ export default defineComponent({
             console.error("Unauthorized access. Please login again.");
             this.logout();
             return
-          }      
+          }
           if (402 <= error.response.status < 500) {
             return error.response.data;
-          }    
-        
+          }
+
           if (error.response.status === 500) {
             return error.response.data;
-        // throw { status: 500, message: "Server error" };
+            // throw { status: 500, message: "Server error" };
           }
           throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
         }
       } finally {
-        this.isLoading=false;
+        this.isLoading = false;
       }
-    }    
+    },
+    async postehrstatus(ehrstatus) {
+      console.log('inside postehrstatus');
+      console.log('ehrstatus=', ehrstatus);
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      const ehrstatusstring = JSON.stringify(ehrstatus);
+      // await this.sleep(5000);
+      try {
+        console.log('before post');
+        const response = await axios.post(`http://127.0.0.1:5000/ehr/ehrstatus`,
+          { "ehrstatus": ehrstatusstring },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
+          });
+        return response.data.ehr;
+      }
+      catch (error) {
+        console.error("Error in postehrstatus:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async putehrstatus(ehrstatus) {
+      console.log('inside putehrstatus');
+      console.log('ehrstatus=', ehrstatus);
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      const ehrstatusstring = JSON.stringify(ehrstatus);
+      // await this.sleep(5000);
+      try {
+        console.log('before post');
+        const response = await axios.post(`http://127.0.0.1:5000/ehr/ehrstatus`,
+          { "ehrstatus": ehrstatusstring },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
+          });
+        return response.data.ehr;
+      }
+      catch (error) {
+        console.error("Error in putehrstatus:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+
+
+
+
   },
 });
 </script>
@@ -786,8 +1010,8 @@ h1 {
   padding-top: 0px;
   display: flex;
   flex-direction: column;
-  margin-top:0px;
-  margin-bottom:100px;
+  margin-top: 0px;
+  margin-bottom: 100px;
   margin-right: 30px;
   margin-left: 220px;
   position: relative;
@@ -802,14 +1026,18 @@ h1 {
   padding: 20px;
   display: flex;
   flex-direction: column; */
-  position: fixed; /* Fix the method selection on the left */
+  position: fixed;
+  /* Fix the method selection on the left */
   top: 0;
   left: 60px;
-  width: 150px; /* You can adjust this width as needed */
-  height: 100%; /* Take up the full height */
+  width: 150px;
+  /* You can adjust this width as needed */
+  height: 100%;
+  /* Take up the full height */
   background: #f4f4f4;
   padding: 20px;
-  overflow-y: auto; /* Allow vertical scrolling within the method section */
+  overflow-y: auto;
+  /* Allow vertical scrolling within the method section */
   /* z-index: 10; Ensure it's on top */
   z-index: 10;
 }
@@ -823,6 +1051,7 @@ h1 {
 .method-item button {
   width: 100%;
 }
+
 method-actions {
   margin-bottom: 0px;
 }
@@ -848,6 +1077,7 @@ method-actions {
 .parameter-form .form-group input {
   width: 255px;
 }
+
 .parameter-form label {
   display: block;
   margin-bottom: 5px;
@@ -862,9 +1092,12 @@ method-actions {
   background-color: #fff;
   padding: 20px;
   background-color: #fff;
-  overflow-x: auto;  /* Add horizontal scroll to results section */
-  overflow-y: hidden;  /* Disable vertical scroll */
-  white-space: nowrap; /* Prevent text wrapping */
+  overflow-x: auto;
+  /* Add horizontal scroll to results section */
+  overflow-y: hidden;
+  /* Disable vertical scroll */
+  white-space: nowrap;
+  /* Prevent text wrapping */
 }
 
 .results-section pre {
@@ -877,12 +1110,17 @@ method-actions {
   background-color: #ccc;
   margin: 20px 0;
 }
+
 .results-container {
   width: 100%;
-  overflow-x: auto; /* Enable horizontal scrolling */
-  overflow-y: hidden; /* Disable vertical scrolling */
-  white-space: nowrap; /* Prevent text wrapping */
-  padding: 10px; /* Add some padding */
+  overflow-x: auto;
+  /* Enable horizontal scrolling */
+  overflow-y: hidden;
+  /* Disable vertical scrolling */
+  white-space: nowrap;
+  /* Prevent text wrapping */
+  padding: 10px;
+  /* Add some padding */
   border: 1px solid #ccc;
   margin-bottom: 10px;
 }
@@ -906,5 +1144,12 @@ method-actions {
 
 .method-title {
   background: #bad489
+}
+
+.file-input {
+  padding: 20px;
+  margin-bottom: 20px;
+  /* display: flex;
+  flex-direction: column; */
 }
 </style>

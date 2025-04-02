@@ -1,8 +1,8 @@
 <template>
   <div class="modal" v-if="isVisible">
     <div class="modal-content">
-      <h2>You are logged in as:</h2>
-      <p><strong>Name:</strong> {{ user.name }}</p>
+      <h3>You are logged in as:</h3>
+      <h2><strong> {{ user.name }} </strong></h2>
       <!-- Add more user information as needed -->
 
       <div class="buttons">
