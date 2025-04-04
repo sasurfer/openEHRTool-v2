@@ -305,7 +305,8 @@ export default defineComponent({
           // { label: '2 POST', value: "", type: 'text' }
         ],
         [],
-        [],
+        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+        { label: 'EHRstatus versioned id', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" },],
 
 
 
@@ -437,8 +438,15 @@ export default defineComponent({
       {
         console.log('inside submit_ehrstatus_update')
         this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        const ehrstatusversionedid = this.currentParams.find(p => p.label === 'EHRstatus versioned id');
+
         if (!this.selectedFile) {
           this.results = 'Please select an EHRStatus file'
+          return;
+        }
+        if (!ehrid.value || !ehrstatusversionedid.value) {
+          this.results = 'EHRid and EHRstatus versioned id are required';
           return;
         }
         try {
@@ -446,7 +454,7 @@ export default defineComponent({
           reader.onload = async () => {
             try {
               const ehrstatus = JSON.parse(reader.result);
-              const ehrResults = await this.putehrstatus(ehrstatus);
+              const ehrResults = await this.putehrstatus(ehrstatus, ehrid.value, ehrstatusversionedid.value);
               console.log('results', ehrResults);
               this.results = JSON.stringify(ehrResults, null, 2);
             }
@@ -455,6 +463,7 @@ export default defineComponent({
               this.results = `Error: ${error.message}`;
             }
           };
+
           reader.readAsText(this.selectedFile);
         }
         catch (error2) {
@@ -931,9 +940,11 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-    async putehrstatus(ehrstatus) {
+    async putehrstatus(ehrstatus, ehrid, ehrstatusversionedid) {
       console.log('inside putehrstatus');
       console.log('ehrstatus=', ehrstatus);
+      console.log('ehrid=', ehrid);
+      console.log('ehrstatusversionedid=', ehrstatusversionedid);
       console.log(localStorage.getItem("authToken"))
       this.isLoading = true;
       this.resultsOK = false;
@@ -941,11 +952,11 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before post');
-        const response = await axios.post(`http://127.0.0.1:5000/ehr/ehrstatus`,
-          { "ehrstatus": ehrstatusstring },
+        const response = await axios.put(`http://127.0.0.1:5000/ehr/ehrstatus`,
+          { "ehrstatus": ehrstatusstring, "ehrid": ehrid, "ehrstatusVersionedId": ehrstatusversionedid },
           {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`, 'Content-Type': 'application/json'
             },
             timeout: 2000000,
           });

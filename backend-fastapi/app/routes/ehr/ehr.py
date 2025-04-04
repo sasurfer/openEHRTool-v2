@@ -10,12 +10,13 @@ from app.backend_ehrbase.ehr.ehr import (
     post_ehr_by_ehrid_ehrbase,
     post_ehr_by_sid_sns_ehrbase,
     post_ehr_by_ehrstatus_ehrbase,
+    put_ehrstatus_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
 from typing import Optional
 import json
-from pydantic import BaseModel
+from app.models.ehr.ehr import EhrStatusPost, EhrStatusGetPut
 
 
 router = APIRouter()
@@ -98,14 +99,10 @@ async def get_ehr_by_sid_sns(
             )
 
 
-class EhrStatusRequest(BaseModel):
-    ehrstatus: str
-
-
 @router.post("/ehrstatus")
 async def post_ehr_by_ehrstatus(
     request: Request,
-    data: EhrStatusRequest,
+    data: EhrStatusPost,
     redis_client: redis.StrictRedis = Depends(get_redis_client),
     token: str = Depends(get_token_from_header),
 ):
@@ -120,7 +117,7 @@ async def post_ehr_by_ehrstatus(
         print(ehrstatus)
         logger.debug(f"ehrstatus={ehrstatus}")
         ehrstatusjson = json.loads(ehrstatus)
-        # ehrstatus = json.dump(ehrstatusjson)
+        ehrstatus = json.dumps(ehrstatusjson)
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid JSON")
     try:
@@ -144,6 +141,62 @@ async def post_ehr_by_ehrstatus(
             print(f"An exception occurred during post_ehr_by_ehrstatus: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during post_ehr_by_ehrstatus"
+            )
+
+
+@router.put("/ehrstatus")
+async def put_ehrstatus(
+    request: Request,
+    data: EhrStatusGetPut,
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside put_ehrstatus")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        ehrstatus = data.ehrstatus
+        ehrid = str(data.ehrid)
+        ehrstatusVersionedId = str(data.ehrstatusVersionedId)
+        logger.debug(f"ehrstatus={ehrstatus}")
+        logger.debug(f"ehrid={ehrid}")
+        logger.debug(f"ehrstatusVersionedId={ehrstatusVersionedId}")
+        ehrstatusjson = json.loads(ehrstatus)
+        ehrstatus = json.dumps(ehrstatusjson)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    try:
+        url_base = request.app.state.url_base
+        response = await put_ehrstatus_ehrbase(
+            request, auth, url_base, ehrstatus, ehrid, ehrstatusVersionedId
+        )
+        insertlogline(
+            redis_client,
+            "Put EHR ehrstatus: ehrid="
+            + ehrid
+            + " ehrstatusVersionedId="
+            + str(ehrstatusVersionedId)
+            + " posted successfully",
+        )
+        responsetext = (
+            "Successfully modified ehrstatus for EHR with ehrid="
+            + ehrid
+            + " ehrstatusVersionedId="
+            + ehrstatusVersionedId
+        )
+        return JSONResponse(content={"ehr": responsetext}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during put_ehrstatus: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(redis_client, "Put EHR ehrstatus: not successful")
+            return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
+        else:
+            print(f"An exception occurred during put_ehrstatus: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during put_ehrstatus"
             )
 
 

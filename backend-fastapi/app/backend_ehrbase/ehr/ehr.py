@@ -169,7 +169,7 @@ async def post_ehr_by_ehrstatus_ehrbase(
     request: Request, auth: str, url_base: str, ehrstatus: str
 ):
     logger = get_logger(request)
-    logger.debug("inside post_ehr_by_ehrid_ehrbase")
+    logger.debug("inside post_ehr_by_ehrstatus_ehrbase")
     async with httpx.AsyncClient() as client:
         myresp = {}
         headers = {
@@ -188,4 +188,40 @@ async def post_ehr_by_ehrstatus_ehrbase(
             myresp["status"] = "success"
             myresp["ehrid"] = response.headers["ETag"].replace('"', "")
             myresp["ehr"] = {"status": myresp["status"], "ehrid": myresp["ehrid"]}
+        return myresp
+
+
+async def put_ehrstatus_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    ehrstatus: str,
+    ehrid: str,
+    ehrstatusversion: str,
+):
+    logger = get_logger(request)
+    logger.debug("inside put_ehrstatus_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        params = {"format": "RAW"}
+        headers = {
+            "Authorization": auth,
+            "Content-Type": "application/JSON",
+            "Accept": "application/json",
+            "Prefer": "return={representation|minimal}",
+            "If-Match": ehrstatusversion,
+        }
+        myurl = url_normalize(url_base + "ehr/" + ehrid + "/ehr_status")
+        response = await fetch_put_data(
+            client=client, url=myurl, headers=headers, data=ehrstatus, timeout=20000
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["ehr"] = {
+                "status": myresp["status"],
+                "ehrid": ehrid,
+                "ehrstatusVersionedId": ehrstatusversion,
+            }
         return myresp
