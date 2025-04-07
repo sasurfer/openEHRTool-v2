@@ -12,6 +12,7 @@ from app.backend_ehrbase.ehr.ehr import (
     post_ehr_by_ehrstatus_ehrbase,
     put_ehrstatus_ehrbase,
     get_ehrstatus_ehrbase,
+    get_ehrstatus_versioned_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
@@ -132,6 +133,11 @@ async def post_ehr_by_ehrstatus(
             redis_client,
             "Post EHR by ehrstatus: ehr " + str(ehrid) + " posted successfully",
         )
+
+        # Insert ehrid into redis list for fast retrieval
+        redis_client.rpush("key_ehrs", ehrid)
+        logger.debug("Data inserted into Redis")
+
         responsetext = "Successfully posted ehrstatus. ehrid=" + str(response["ehrid"])
         return JSONResponse(content={"ehr": responsetext}, status_code=200)
     except Exception as e:
@@ -162,7 +168,7 @@ async def get_ehrstatus(
         raise HTTPException(status_code=401, detail="Unauthorized")
     option = 0
     try:
-        if data == None or data == "":
+        if data == "" or data == None:
             option = 1
         elif "::" in data:  # determine if data is a valid versionedId
             try:
@@ -193,12 +199,14 @@ async def get_ehrstatus(
         if option == 1:
             insertlogline(
                 redis_client,
-                "Get EHR ehrstatus: ehrid=" + ehrid + " retrieved successfully",
+                "Get EHR ehrstatus: ehrstatus for ehrid="
+                + ehrid
+                + " retrieved successfully",
             )
         elif option == 2:
             insertlogline(
                 redis_client,
-                "Get EHR ehrstatus: ehrid="
+                "Get EHR ehrstatus: ehrstatus for ehrid="
                 + ehrid
                 + " and date="
                 + data
@@ -207,7 +215,7 @@ async def get_ehrstatus(
         else:
             insertlogline(
                 redis_client,
-                "Get EHR ehrstatus: ehrid="
+                "Get EHR ehrstatus: ehrstatus for ehrid="
                 + ehrid
                 + " and versionedId="
                 + data
@@ -304,6 +312,11 @@ async def post_ehr_by_ehrid_without(
         insertlogline(
             redis_client, "Post EHR by ehrid: ehr " + ehrid + " posted successfully"
         )
+
+        # Insert ehrid into redis list for fast retrieval
+        redis_client.rpush("key_ehrs", ehrid)
+        logger.debug("Data inserted into Redis")
+
         return JSONResponse(content={"ehr": response["ehr"]}, status_code=200)
     except Exception as e:
         logger.error(f"An exception occurred during post_ehr_by_ehrid_without: {e}")
@@ -341,6 +354,10 @@ async def post_ehr_by_ehrid_with(
         insertlogline(
             redis_client, "Post EHR by ehrid: ehr " + ehrid + " posted successfully"
         )
+        # Insert ehrid into redis list for fast retrieval
+        redis_client.rpush("key_ehrs", ehrid)
+        logger.debug("Data inserted into Redis")
+
         return JSONResponse(content={"ehr": response["ehr"]}, status_code=200)
     except Exception as e:
         logger.error(f"An exception occurred during post_ehr_by_ehrid_with: {e}")
@@ -388,6 +405,11 @@ async def post_ehr_by_sid_sns_with(
             + subjectnamespace
             + " posted successfully",
         )
+
+        # Insert ehrid into redis list for fast retrieval
+        redis_client.rpush("key_ehrs", ehrid)
+        logger.debug("Data inserted into Redis")
+
         return JSONResponse(content={"ehr": response["ehr"]}, status_code=200)
     except Exception as e:
         logger.error(f"An exception occurred during post_ehr_by_sid_sns_with: {e}")
@@ -435,6 +457,11 @@ async def post_ehr_by_sid_sns_without(
             + subjectnamespace
             + " posted successfully",
         )
+
+        # Insert ehrid into redis list for fast retrieval
+        redis_client.rpush("key_ehrs", ehrid)
+        logger.debug("Data inserted into Redis")
+
         return JSONResponse(content={"ehr": response["ehr"]}, status_code=200)
     except Exception as e:
         logger.error(f"An exception occurred during post_ehr_by_sid_sns_without: {e}")
@@ -449,4 +476,99 @@ async def post_ehr_by_sid_sns_without(
             raise HTTPException(
                 status_code=500,
                 detail="Server error during post_ehr_by_sid_sns_without",
+            )
+
+
+@router.get("/{ehrid}/vehrstatus")
+async def get_ehrstatus_versioned(
+    request: Request,
+    ehrid: UUID,
+    data: Optional[str] = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside get_ehrstatus_versioned")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    option = 0
+    try:
+        if data == "":
+            option = 5
+        elif data == "versionedinfo":
+            option = 1
+        elif data == "versionedhistory":
+            option = 2
+        elif "::" in data:  # determine if data is a valid versionedId
+            try:
+                VersionedObjectId(data)
+                option = 4
+            except ValueError:
+                pass
+        else:  # determine if data is a valid date
+            try:
+                datetime.fromisoformat(data)
+                option = 3
+            except ValueError:
+                pass
+
+        if option == 0:
+            raise HTTPException(status_code=400)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid data")
+    try:
+        logger.debug(f"data={data}")
+        logger.debug(f"option={option}")
+        logger.debug(f"ehrid={ehrid}")
+        ehrid = str(ehrid)
+        url_base = request.app.state.url_base
+        response = await get_ehrstatus_versioned_ehrbase(
+            request, auth, url_base, ehrid, data, option
+        )
+        if option == 1:
+            insertlogline(
+                redis_client,
+                "Get EHR ehrstatus versioned: info for ehrid="
+                + ehrid
+                + " retrieved successfully",
+            )
+        elif option == 2:
+            insertlogline(
+                redis_client,
+                "Get EHR ehrstatus versioned: history for ehrid="
+                + ehrid
+                + " retrieved successfully",
+            )
+        elif option == 3:
+            insertlogline(
+                redis_client,
+                "Get EHR ehrstatus versioned: ehrstatus forehrid="
+                + ehrid
+                + " and date="
+                + data
+                + " retrieved successfully",
+            )
+        else:
+            insertlogline(
+                redis_client,
+                "Get EHR ehrstatus versioned: ehrstatus for ehrid="
+                + ehrid
+                + " and versionedId="
+                + data
+                + " retrieved successfully",
+            )
+        return JSONResponse(
+            content={"ehrstatus": response["ehrstatus"]}, status_code=200
+        )
+    except Exception as e:
+        logger.error(f"An exception occurred during get_ehrstatus_versioned: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(redis_client, "Get EHR ehrstatus versioned: not successful")
+            return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
+        else:
+            print(f"An exception occurred during get_ehrstatus_versioned: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during get_ehrstatus_versioned"
             )

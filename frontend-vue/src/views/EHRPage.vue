@@ -265,7 +265,11 @@ export default defineComponent({
           { label: 'Update EHRStatus', type: 'Post/Put' },
           { label: 'Get EHRStatus at time', type: 'Get' },
           { label: 'Get EHRStatus by version', type: 'Get' },
-          { label: 'Get versioned EHRStatus', type: 'Get' }
+          { label: 'Get versioned EHRStatus info', type: 'Get' },
+          { label: 'Get versioned EHRStatus revision history', type: 'Get' },
+          { label: 'Get versioned EHRStatus at time', type: 'Get' },
+          { label: 'Get versioned EHRStatus by version', type: 'Get' },
+
         ]
       };
       return methods['methods'] || [];
@@ -282,7 +286,10 @@ export default defineComponent({
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_update' }],
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_at_time' }],
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_by_version' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned' }]
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_info' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_history' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_at_time' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_by_version' }],
 
       ];
       return actions[index] || [];
@@ -313,7 +320,10 @@ export default defineComponent({
         { label: 'EHRStatus versioned id', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
         [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Timestamp (optional)', value: '', type: 'text', placeholder: "2020-01-20T16:40:07.227+01:00" }],
         [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'EHRStatus versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
-
+        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],
+        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],
+        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Timestamp (optional)', value: '', type: 'text', placeholder: "2020-01-20T16:40:07.227+01:00" }],
+        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'EHRStatus versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
 
       ];
       return params[index] || [];
@@ -500,7 +510,7 @@ export default defineComponent({
           this.results = 'EHRid is required';
         }
       }
-      else if (action == 'submit_ehrstatus_get_by_version') //get ehrstatus at time
+      else if (action == 'submit_ehrstatus_get_by_version') //get ehrstatus by version
       {
         console.log('inside submit_ehrstatus_get_by_version')
         this.resultsOK = false;
@@ -524,8 +534,96 @@ export default defineComponent({
           this.results = 'EHRid is required';
         }
       }
+      else if (action == 'submit_ehrstatus_get_versioned_info') //get versioned ehrstatus info
+      {
+        console.log('inside submit_ehrstatus_get_versioned_info')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
 
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
+          try {
+            const ehrResults = await this.getehrstatusversionedinfo(ehrid.value);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
+          }
+          catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
+      else if (action == 'submit_ehrstatus_get_versioned_history') //get versioned ehrstatus revision history
+      {
+        console.log('inside submit_ehrstatus_get_versioned_history')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
 
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
+          try {
+            const ehrResults = await this.getehrstatusversionedhistory(ehrid.value);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
+          }
+          catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
+      else if (action == 'submit_ehrstatus_get_versioned_at_time') //get ehrstatus versioned at time
+      {
+        console.log('inside submit_ehrstatus_get_versioned_at_time')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        const timestamp = this.currentParams.find(p => p.label === 'Timestamp (optional)');
+        this.timestamp = timestamp?.value || "";
+        console.log('timestamp is', this.timestamp);
+
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
+          try {
+            const ehrResults = await this.getehrstatusversionedattime(ehrid.value, this.timestamp);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
+          }
+          catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
+      else if (action == 'submit_ehrstatus_get_versioned_by_version') //get ehrstatus versioned by version
+      {
+        console.log('inside submit_ehrstatus_get_versioned_by_version')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        const version = this.currentParams.find(p => p.label === 'EHRStatus versioned id (optional)');
+        this.version = version?.value || "";
+        console.log('version is', this.version);
+
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
+          try {
+            const ehrResults = await this.getehrstatusversionedbyversion(ehrid.value, this.version);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
+          }
+          catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
 
 
 
@@ -1127,6 +1225,182 @@ export default defineComponent({
 
 
 
+    async getehrstatusversionedinfo(ehrid) {
+      console.log('inside getehrstatusversionedinfo')
+      console.log(ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        console.log('before get')
+        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/vehrstatus`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              data: 'versionedinfo'
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.ehrstatus;
+      }
+      catch (error) {
+        console.error("Error in getehrstatusversionedinfo:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getehrstatusversionedhistory(ehrid) {
+      console.log('inside getehrstatusversionedhistory')
+      console.log(ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        console.log('before get')
+        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/vehrstatus`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              data: 'versionedhistory'
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.ehrstatus;
+      }
+      catch (error) {
+        console.error("Error in getehrstatusversionedhistory:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getehrstatusversionedattime(ehrid, timestamp) {
+      console.log('inside getehrstatusversionedattime')
+      console.log(ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        console.log('before get')
+        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/vehrstatus`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              data: timestamp
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.ehrstatus;
+      }
+      catch (error) {
+        console.error("Error in getehrstatusversionedattime:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getehrstatusversionedbyversion(ehrid, version) {
+      console.log('inside getehrstatusversionedbyversion')
+      console.log(ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        console.log('before get')
+        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/vehrstatus`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              data: version
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.ehrstatus;
+      }
+      catch (error) {
+        console.error("Error in getehrstatusversionedbyversion:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   },
@@ -1185,7 +1459,7 @@ h1 {
   /* Fix the method selection on the left */
   top: 0;
   left: 60px;
-  width: 150px;
+  width: 160px;
   /* You can adjust this width as needed */
   height: 100%;
   /* Take up the full height */

@@ -261,3 +261,52 @@ async def get_ehrstatus_ehrbase(
             myresp["status"] = "success"
             myresp["ehrstatus"] = json.loads(response.text)
         return myresp
+
+
+async def get_ehrstatus_versioned_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    ehrid: str,
+    data: str,
+    option: int,
+):
+    logger = get_logger(request)
+    logger.debug("inside get_ehrstatus_versioned_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        myurl = url_normalize(url_base + "ehr/" + ehrid + "/versioned_ehr_status")
+        params = {}
+        headers = {"Authorization": auth, "Content-Type": "application/json"}
+        if option == 2:
+            myurl = url_normalize(
+                url_base + "ehr/" + ehrid + "/versioned_ehr_status/revision_history"
+            )
+        if option == 4:  # data=versionedid
+            myurl = url_normalize(
+                url_base + "ehr/" + ehrid + "/versioned_ehr_status/version/" + data
+            )
+        elif option == 3:  # data=version_at_time
+            myurl = url_normalize(
+                url_base + "ehr/" + ehrid + "/versioned_ehr_status/version"
+            )
+            params = {"version_at_time": data}
+        elif option == 5:
+            myurl = url_normalize(
+                url_base + "ehr/" + ehrid + "/versioned_ehr_status/version"
+            )
+        logger.debug("myurl: %s", myurl)
+        logger.debug("params: %s", params)
+        logger.debug("headers: %s", headers)
+        logger.debug("option: %s", option)
+        logger.debug("data: %s", data)
+        response = await fetch_get_data(
+            client=client, url=myurl, headers=headers, params=params, timeout=20000
+        )
+        # logger.debug(f"response.text={response.text}")
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["ehrstatus"] = json.loads(response.text)
+        return myresp
