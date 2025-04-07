@@ -9,21 +9,37 @@
 
     <div class="method-selection-zone">
       <h3><i>EHR Methods</i></h3>
-      <!-- Only show methods if it's not the Home page -->
-      <!-- <div v-if="!isHomePage"> -->
-      <label>
-        <input type="radio" v-model="methodType" value="Get" />
-        Get
-      </label>
-      <label>
-        <input type="radio" v-model="methodType" value="Post/Put" />
-        Post/Put
-      </label>
-      <!-- <div v-for="(method, index) in currentMethods" :key="index" class="method-item" :style="getMethodStyle(index)">
-          <div v-if="method.type === methodType">
-          <button @click="selectMethod(index)">{{ method.label }}</button>
-          </div>
-        </div> -->
+      <div class="radio-group-container">
+        <div class="radio-group">
+          <label>
+            <input type="radio" v-model="methodType" value="Get" />
+            Get
+          </label>
+          <label>
+            <input type="radio" v-model="methodType" value="Post" />
+            Post
+          </label>
+          <label>
+            <input type="radio" v-model="methodType" value="Put" />
+            Put
+          </label>
+        </div>
+        <div class="radio-group">
+          <label>
+            <input type="radio" v-model="onwhat" value="ehr" />
+            Ehr
+          </label>
+          <label>
+            <input type="radio" v-model="onwhat" value="ehrstatus" />
+            Ehrstatus
+          </label>
+          <label>
+            <input type="radio" v-model="onwhat" value="folder" />
+            Folder
+          </label>
+        </div>
+      </div>
+
 
       <div v-for="(method, index) in filteredMethods" :key="index" class="method-item" :style="getMethodStyle(index)">
         <button @click="selectMethod(index)">{{ method.label }}</button>
@@ -145,6 +161,7 @@ export default defineComponent({
   data() {
     return {
       methodType: "Get",
+      onwhat: "ehr",
       resultsOK: false,
       resultsFile: {},
       isLoading: false,
@@ -184,7 +201,7 @@ export default defineComponent({
   },
   computed: {
     filteredMethods() {
-      return this.currentMethods.filter(method => method.type === this.methodType);
+      return this.currentMethods.filter(method => method.type.includes(this.methodType) && method.what.includes(this.onwhat));
     }
   },
   mounted() {
@@ -206,17 +223,21 @@ export default defineComponent({
     methodType() {
       // this.selectedMethodIndex=null;
       this.selectedMethod = null;
+    },
+    onwhat() {
+      this.selectedMethod = null;
     }
+
   },
   methods: {
     getMethodStyle(index) {
       return index === this.selectedMethod
         ? { backgroundColor: '#bad489', color: 'white' } : {};
     },
-    getIndexByType(arr, targetIndex, type) {
+    getIndexByTypeWhat(arr, targetIndex, type, what) {
       let count = 0;
       for (let i = 0; i < arr.length; i++) {
-        if (arr[i].type === type) {
+        if (arr[i].type.includes(type) && arr[i].what.includes(what)) {
           if (targetIndex === count) {
             return i;
           }
@@ -240,7 +261,7 @@ export default defineComponent({
     selectMethod(index) {
       this.resultsOK = false;
       this.currentMethods = this.getMethodsForEHR();
-      const index2 = this.getIndexByType(this.currentMethods, index, this.methodType)
+      const index2 = this.getIndexByTypeWhat(this.currentMethods, index, this.methodType, this.onwhat)
       console.log("index", index)
       console.log("index2", index2)
       this.selectedMethod = index;
@@ -257,19 +278,20 @@ export default defineComponent({
     getMethodsForEHR() {
       const methods = {
         'methods': [
-          { label: 'Get EHR by EHRid', type: 'Get' },
-          { label: 'Get EHR by SubjectId, SubjectNameSpace', type: 'Get' },
-          { label: 'Post EHR with/without EHRid specified', type: 'Post/Put' },
-          { label: 'Post EHR with SubjectId, SubjectNameSpace specified', type: 'Post/Put' },
-          { label: 'Post EHR with EHRStatus', type: 'Post/Put' },
-          { label: 'Update EHRStatus', type: 'Post/Put' },
-          { label: 'Get EHRStatus at time', type: 'Get' },
-          { label: 'Get EHRStatus by version', type: 'Get' },
-          { label: 'Get versioned EHRStatus info', type: 'Get' },
-          { label: 'Get versioned EHRStatus revision history', type: 'Get' },
-          { label: 'Get versioned EHRStatus at time', type: 'Get' },
-          { label: 'Get versioned EHRStatus by version', type: 'Get' },
-
+          { label: 'Get EHR by EHRid', type: ['Get'], what: ['ehr'] },
+          { label: 'Get EHR by SubjectId, SubjectNameSpace', type: ['Get'], what: ['ehr'] },
+          { label: 'Post EHR with/without EHRid specified', type: ['Post', 'Put'], what: ['ehr'] },
+          { label: 'Post EHR with SubjectId, SubjectNameSpace specified', type: ['Post', 'Put'], what: ['ehr'] },
+          { label: 'Post EHR with EHRStatus', type: ['Post'], what: ['ehr', 'ehrstatus'] },
+          { label: 'Update EHRStatus', type: ['Put'], what: ['ehrstatus'] },
+          { label: 'Get EHRStatus at time', type: ['Get'], what: ['ehrstatus'] },
+          { label: 'Get EHRStatus by version', type: ['Get'], what: ['ehrstatus'] },
+          { label: 'Get versioned EHRStatus info', type: ['Get'], what: ['ehrstatus'] },
+          { label: 'Get versioned EHRStatus revision history', type: ['Get'], what: ['ehrstatus'] },
+          { label: 'Get versioned EHRStatus at time', type: ['Get'], what: ['ehrstatus'] },
+          { label: 'Get versioned EHRStatus by version', type: ['Get'], what: ['ehrstatus'] },
+          { label: 'Get versioned EHRStatus by version', type: ['Get'], what: ['ehrstatus'] },
+          { label: 'Post Directory', type: ['Post'], what: ['folder'] }
         ]
       };
       return methods['methods'] || [];
@@ -1217,14 +1239,6 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-
-
-
-
-
-
-
-
     async getehrstatusversionedinfo(ehrid) {
       console.log('inside getehrstatusversionedinfo')
       console.log(ehrid)
@@ -1459,12 +1473,12 @@ h1 {
   /* Fix the method selection on the left */
   top: 0;
   left: 60px;
-  width: 160px;
+  width: 180px;
   /* You can adjust this width as needed */
   height: 100%;
   /* Take up the full height */
   background: #f4f4f4;
-  padding: 20px;
+  /* padding: 20px; */
   overflow-y: auto;
   /* Allow vertical scrolling within the method section */
   /* z-index: 10; Ensure it's on top */
@@ -1580,5 +1594,40 @@ method-actions {
   margin-bottom: 20px;
   /* display: flex;
   flex-direction: column; */
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  /* padding-left: 5px;
+  padding-right: 5px; */
+  /* Adjust the gap between the radio buttons */
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  /* Smaller label size */
+}
+
+.radio-group input {
+  margin-right: 0px;
+  /* Space between radio button and label text */
+}
+
+
+.radio-group-container {
+  border: 2px solid #007BFF;
+  /* Blue border around radio buttons area */
+  padding: 0px;
+  padding-bottom: 5px;
+  /* Space between radio buttons and the border */
+  border-radius: 5px;
+  /* Optional: rounded corners */
+  margin-bottom: 10px;
 }
 </style>
