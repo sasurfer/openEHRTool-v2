@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request, Depends, Query
 from app.security import verify_jwt_token, get_token_from_header
 from uuid import UUID
 from app.utils import get_logger
@@ -11,13 +11,15 @@ from app.backend_ehrbase.ehr.ehr import (
     post_ehr_by_sid_sns_ehrbase,
     post_ehr_by_ehrstatus_ehrbase,
     put_ehrstatus_ehrbase,
+    get_ehrstatus_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
 from typing import Optional
 import json
 from app.models.ehr.ehr import EhrStatusPost, EhrStatusGetPut
-
+from datetime import datetime
+from app.models.ehr.ehr import VersionedObjectId
 
 router = APIRouter()
 
@@ -141,6 +143,88 @@ async def post_ehr_by_ehrstatus(
             print(f"An exception occurred during post_ehr_by_ehrstatus: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during post_ehr_by_ehrstatus"
+            )
+
+
+@router.get("/{ehrid}/ehrstatus")
+async def get_ehrstatus(
+    request: Request,
+    ehrid: UUID,
+    data: Optional[str] = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside get_ehrstatus")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    option = 0
+    try:
+        if data == None or data == "":
+            option = 1
+        elif "::" in data:  # determine if data is a valid versionedId
+            try:
+                VersionedObjectId(data)
+                option = 3
+            except ValueError:
+                pass
+        else:  # determine if data is a valid date
+            try:
+                datetime.fromisoformat(data)
+                option = 2
+            except ValueError:
+                pass
+
+        if option == 0:
+            raise HTTPException(status_code=400)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid data")
+    try:
+        logger.debug(f"data={data}")
+        logger.debug(f"option={option}")
+        logger.debug(f"ehrid={ehrid}")
+        ehrid = str(ehrid)
+        url_base = request.app.state.url_base
+        response = await get_ehrstatus_ehrbase(
+            request, auth, url_base, ehrid, data, option
+        )
+        if option == 1:
+            insertlogline(
+                redis_client,
+                "Get EHR ehrstatus: ehrid=" + ehrid + " retrieved successfully",
+            )
+        elif option == 2:
+            insertlogline(
+                redis_client,
+                "Get EHR ehrstatus: ehrid="
+                + ehrid
+                + " and date="
+                + data
+                + " retrieved successfully",
+            )
+        else:
+            insertlogline(
+                redis_client,
+                "Get EHR ehrstatus: ehrid="
+                + ehrid
+                + " and versionedId="
+                + data
+                + " retrieved successfully",
+            )
+        return JSONResponse(
+            content={"ehrstatus": response["ehrstatus"]}, status_code=200
+        )
+    except Exception as e:
+        logger.error(f"An exception occurred during get_ehrstatus: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(redis_client, "Get EHR ehrstatus: not successful")
+            return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
+        else:
+            print(f"An exception occurred during get_ehrstatus: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during get_ehrstatus"
             )
 
 

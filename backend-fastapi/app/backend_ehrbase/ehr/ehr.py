@@ -225,3 +225,39 @@ async def put_ehrstatus_ehrbase(
                 "ehrstatusVersionedId": ehrstatusversion,
             }
         return myresp
+
+
+async def get_ehrstatus_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    ehrid: str,
+    data: str,
+    option: int,
+):
+    logger = get_logger(request)
+    logger.debug("inside get_ehrstatus_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        myurl = url_normalize(url_base + "ehr/" + ehrid + "/ehr_status")
+        params = {}
+        headers = {"Authorization": auth, "Content-Type": "application/json"}
+        if option == 3:  # data=versionedid
+            myurl = url_normalize(url_base + "ehr/" + ehrid + "/ehr_status/" + data)
+        elif option == 2:  # data=version_at_time
+            params = {"version_at_time": data}
+        logger.debug("myurl: %s", myurl)
+        logger.debug("params: %s", params)
+        logger.debug("headers: %s", headers)
+        logger.debug("option: %s", option)
+        logger.debug("data: %s", data)
+        response = await fetch_get_data(
+            client=client, url=myurl, headers=headers, params=params, timeout=20000
+        )
+        # logger.debug(f"response.text={response.text}")
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["ehrstatus"] = json.loads(response.text)
+        return myresp
