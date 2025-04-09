@@ -13,14 +13,22 @@ from app.backend_ehrbase.ehr.ehr import (
     put_ehrstatus_ehrbase,
     get_ehrstatus_ehrbase,
     get_ehrstatus_versioned_ehrbase,
+    post_directory_ehrbase,
+    put_directory_ehrbase,
+    get_directory_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
 from typing import Optional
 import json
-from app.models.ehr.ehr import EhrStatusPost, EhrStatusGetPut
+from app.models.ehr.ehr import (
+    VersionedObjectId,
+    EhrStatusPost,
+    EhrStatusGetPut,
+    DirectoryPost,
+    DirectoryPut,
+)
 from datetime import datetime
-from app.models.ehr.ehr import VersionedObjectId
 
 router = APIRouter()
 
@@ -227,7 +235,37 @@ async def get_ehrstatus(
     except Exception as e:
         logger.error(f"An exception occurred during get_ehrstatus: {e}")
         if 400 <= e.status_code < 500:
-            insertlogline(redis_client, "Get EHR ehrstatus: not successful")
+            if option == 1:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus: ehrstatus for ehrid="
+                    + ehrid
+                    + " not successful",
+                )
+            elif option == 2:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus: ehrstatus for ehrid="
+                    + ehrid
+                    + " and date="
+                    + data
+                    + " not successful",
+                )
+            elif option == 3:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus: ehrstatus for ehrid="
+                    + ehrid
+                    + " and versionedId="
+                    + data
+                    + " not successful",
+                )
+            else:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus: not successful",
+                )
+
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
             print(f"An exception occurred during get_ehrstatus: {e}")
@@ -571,4 +609,208 @@ async def get_ehrstatus_versioned(
             print(f"An exception occurred during get_ehrstatus_versioned: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during get_ehrstatus_versioned"
+            )
+
+
+@router.post("/{ehrid}/directory")
+async def post_directory(
+    request: Request,
+    folder: DirectoryPost,
+    ehrid: UUID,
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside post_directory")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        ehrid = str(ehrid)
+        logger.debug(f"ehrid={ehrid}")
+        folder = folder.directory
+        logger.debug(f"folder={folder}")
+        folderjson = json.loads(folder)
+        folder = json.dumps(folderjson)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    try:
+        url_base = request.app.state.url_base
+        response = await post_directory_ehrbase(request, auth, url_base, ehrid, folder)
+        insertlogline(
+            redis_client,
+            "Post EHR directory folder: Directory folder for ehr "
+            + ehrid
+            + " posted successfully",
+        )
+
+        return JSONResponse(content={"folder": response["json"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during post_directory: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(redis_client, "Post EHR directory folder: not successful")
+            return JSONResponse(
+                content={"folder": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during post_directory: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during post_directory"
+            )
+
+
+@router.put("/{ehrid}/directory")
+async def put_directory(
+    request: Request,
+    data: DirectoryPut,
+    ehrid: UUID,
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside put_directory")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        ehrid = str(ehrid)
+        logger.debug(f"ehrid={ehrid}")
+        folder = data.directory
+        logger.debug(f"folder={folder}")
+        versionedid = str(data.directoryVersionedId)
+        logger.debug(f"versionedid={versionedid}")
+        folderjson = json.loads(folder)
+        folder = json.dumps(folderjson)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    try:
+        url_base = request.app.state.url_base
+        response = await put_directory_ehrbase(
+            request, auth, url_base, ehrid, folder, versionedid
+        )
+        insertlogline(
+            redis_client,
+            "Put EHR directory folder: Directory folder for ehr "
+            + ehrid
+            + " updated successfully",
+        )
+
+        return JSONResponse(content={"folder": response["json"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during put_directory: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                "Put EHR directory folder: Directory folder update for ehr"
+                + ehrid
+                + " not successful",
+            )
+            return JSONResponse(
+                content={"folder": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during put_directory: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during put_directory"
+            )
+
+
+@router.get("/{ehrid}/directory")
+async def get_directory(
+    request: Request,
+    ehrid: UUID,
+    data: Optional[str] = Query(None),
+    path: Optional[str] = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside get_ehrstatus")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    option = 0
+    logger.debug(f"dddddddata={data}")
+    try:
+        if data == "" or data == None:
+            option = 1
+        elif "::" in data:  # determine if data is a valid versionedId
+            try:
+                VersionedObjectId(data)
+                option = 3
+            except ValueError:
+                pass
+        else:  # determine if data is a valid date
+            try:
+                datetime.fromisoformat(data)
+                option = 2
+            except ValueError:
+                pass
+
+        if option == 0:
+            raise HTTPException(status_code=400)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid data")
+    try:
+        logger.debug(f"data={data}")
+        logger.debug(f"option={option}")
+        logger.debug(f"ehrid={ehrid}")
+        ehrid = str(ehrid)
+        url_base = request.app.state.url_base
+        response = await get_directory_ehrbase(
+            request, auth, url_base, ehrid, data, path, option
+        )
+        if option == 1:
+            insertlogline(
+                redis_client,
+                "Get EHR directory: directory for ehrid="
+                + ehrid
+                + " retrieved successfully",
+            )
+        elif option == 2:
+            insertlogline(
+                redis_client,
+                "Get EHR directory: directory for ehrid="
+                + ehrid
+                + " and date="
+                + data
+                + " retrieved successfully",
+            )
+        else:
+            insertlogline(
+                redis_client,
+                "Get EHR directory: directory for ehrid="
+                + ehrid
+                + " and versionedId="
+                + data
+                + " retrieved successfully",
+            )
+        return JSONResponse(content={"folder": response["json"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during get_directory: {e}")
+        if 400 <= e.status_code < 500:
+            if option == 1:
+                insertlogline(
+                    redis_client, f"Get EHR directory: not successful for ehr {ehrid}"
+                )
+            elif option == 2:
+                insertlogline(
+                    redis_client,
+                    f"Get EHR directory: not successful for ehr {ehrid} and date {data}",
+                )
+            elif option == 3:
+                insertlogline(
+                    redis_client,
+                    f"Get EHR directory: not successful for ehr {ehrid} and versionedId {data}",
+                )
+            else:
+                insertlogline(redis_client, "Get EHR directory: not successful")
+            return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
+        else:
+            print(f"An exception occurred during get_directory: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during get_directory"
             )

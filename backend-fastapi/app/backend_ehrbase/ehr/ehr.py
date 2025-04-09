@@ -213,7 +213,12 @@ async def put_ehrstatus_ehrbase(
         }
         myurl = url_normalize(url_base + "ehr/" + ehrid + "/ehr_status")
         response = await fetch_put_data(
-            client=client, url=myurl, headers=headers, data=ehrstatus, timeout=20000
+            client=client,
+            url=myurl,
+            headers=headers,
+            data=ehrstatus,
+            params=params,
+            timeout=20000,
         )
         response.raise_for_status()
         myresp["status_code"] = response.status_code
@@ -309,4 +314,109 @@ async def get_ehrstatus_versioned_ehrbase(
         if 200 <= response.status_code < 210:
             myresp["status"] = "success"
             myresp["ehrstatus"] = json.loads(response.text)
+        return myresp
+
+
+async def post_directory_ehrbase(
+    request: Request, auth: str, url_base: str, ehrid: str, folder: str
+):
+    logger = get_logger(request)
+    logger.debug("inside post_directory_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        headers = {
+            "Authorization": auth,
+            "Content-Type": "application/JSON",
+            "Accept": "application/json",
+            "Prefer": "return=representation",
+        }
+        myurl = url_normalize(url_base + "ehr/" + ehrid + "/directory")
+        response = await fetch_post_data(
+            client=client, url=myurl, headers=headers, data=folder, timeout=20000
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["json"] = json.loads(response.text)
+        return myresp
+
+
+async def put_directory_ehrbase(
+    request: Request, auth: str, url_base: str, ehrid: str, folder: str, versionid: str
+):
+    logger = get_logger(request)
+    logger.debug("inside put_directory_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        headers = {
+            "Authorization": auth,
+            "Content-Type": "application/JSON",
+            "Accept": "application/json",
+            "Prefer": "return=representation",
+            "If-Match": versionid,
+        }
+        params = {}
+        logger.debug(f"versionid: {versionid}")
+        logger.debug(f"folder: {folder}")
+        logger.debug(f"ehrid: {ehrid}")
+
+        myurl = url_normalize(url_base + "ehr/" + ehrid + "/directory")
+        response = await fetch_put_data(
+            client=client,
+            url=myurl,
+            headers=headers,
+            data=folder,
+            params=params,
+            timeout=20000,
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["json"] = json.loads(response.text)
+        return myresp
+
+
+async def get_directory_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    ehrid: str,
+    data: str,
+    path: str,
+    option: int,
+):
+    logger = get_logger(request)
+    logger.debug("inside get_directory_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        myurl = url_normalize(url_base + "ehr/" + ehrid + "/directory")
+        params = {}
+        if path:
+            params["path"] = path
+        headers = {
+            "Authorization": auth,
+            "Content-Type": "application/json",
+            "Prefer": "return=representation",
+            "accept": "application/json",
+        }
+        if option == 3:  # data=versionedid
+            myurl = url_normalize(url_base + "ehr/" + ehrid + "/directory/" + data)
+        elif option == 2:  # data=version_at_time
+            params["version_at_time"] = data
+        logger.debug("myurl: %s", myurl)
+        logger.debug("params: %s", params)
+        logger.debug("headers: %s", headers)
+        logger.debug("option: %s", option)
+        logger.debug("data: %s", data)
+        response = await fetch_get_data(
+            client=client, url=myurl, headers=headers, params=params, timeout=20000
+        )
+        # logger.debug(f"response.text={response.text}")
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["json"] = json.loads(response.text)
         return myresp

@@ -23,6 +23,10 @@
             <input type="radio" v-model="methodType" value="Put" />
             Put
           </label>
+          <label>
+            <input type="radio" v-model="methodType" value="Del" />
+            Del
+          </label>
         </div>
         <div class="radio-group">
           <label>
@@ -35,7 +39,7 @@
           </label>
           <label>
             <input type="radio" v-model="onwhat" value="folder" />
-            Folder
+            Directory
           </label>
         </div>
       </div>
@@ -255,6 +259,15 @@ export default defineComponent({
         { file: true, label: 'Choose EHRStatus File' },
         { file: true, label: 'Choose EHRStatus File' },
         { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: true, label: 'Choose Directory/Folder File' },
+        { file: true, label: 'Choose Directory/Folder File' },
+        { file: false, label: '' },
+        { file: false, label: '' }
       ];
       return needFile[index] || { file: false, label: '' };
     },
@@ -278,20 +291,24 @@ export default defineComponent({
     getMethodsForEHR() {
       const methods = {
         'methods': [
-          { label: 'Get EHR by EHRid', type: ['Get'], what: ['ehr'] },
-          { label: 'Get EHR by SubjectId, SubjectNameSpace', type: ['Get'], what: ['ehr'] },
-          { label: 'Post EHR with/without EHRid specified', type: ['Post', 'Put'], what: ['ehr'] },
-          { label: 'Post EHR with SubjectId, SubjectNameSpace specified', type: ['Post', 'Put'], what: ['ehr'] },
-          { label: 'Post EHR with EHRStatus', type: ['Post'], what: ['ehr', 'ehrstatus'] },
-          { label: 'Update EHRStatus', type: ['Put'], what: ['ehrstatus'] },
-          { label: 'Get EHRStatus at time', type: ['Get'], what: ['ehrstatus'] },
-          { label: 'Get EHRStatus by version', type: ['Get'], what: ['ehrstatus'] },
-          { label: 'Get versioned EHRStatus info', type: ['Get'], what: ['ehrstatus'] },
-          { label: 'Get versioned EHRStatus revision history', type: ['Get'], what: ['ehrstatus'] },
-          { label: 'Get versioned EHRStatus at time', type: ['Get'], what: ['ehrstatus'] },
-          { label: 'Get versioned EHRStatus by version', type: ['Get'], what: ['ehrstatus'] },
-          { label: 'Get versioned EHRStatus by version', type: ['Get'], what: ['ehrstatus'] },
-          { label: 'Post Directory', type: ['Post'], what: ['folder'] }
+          { label: 'Retrieve EHR by EHRid', type: ['Get'], what: ['ehr'] },//1
+          { label: 'Retrieve EHR by SubjectId, SubjectNameSpace', type: ['Get'], what: ['ehr'] },//2
+          { label: ' Create EHR with/without EHRid specified', type: ['Post', 'Put'], what: ['ehr'] },//3
+          { label: 'Create EHR with SubjectId, SubjectNameSpace specified', type: ['Post', 'Put'], what: ['ehr'] },//4
+          { label: 'Create EHR via EHRStatus', type: ['Post'], what: ['ehr', 'ehrstatus'] },//5
+          { label: 'Update EHRStatus', type: ['Put'], what: ['ehrstatus'] },//6
+          { label: 'Retrieve EHRStatus at time', type: ['Get'], what: ['ehrstatus'] },//7
+          { label: 'Retrieve EHRStatus by version', type: ['Get'], what: ['ehrstatus'] },//8
+          { label: 'Retrieve versioned EHRStatus info', type: ['Get'], what: ['ehrstatus'] },//9
+          { label: 'Retrieve versioned EHRStatus revision history', type: ['Get'], what: ['ehrstatus'] },//10
+          { label: 'Retrieve versioned EHRStatus at time', type: ['Get'], what: ['ehrstatus'] },//11
+          { label: 'Retrieve versioned EHRStatus by version', type: ['Get'], what: ['ehrstatus'] },//12
+          { label: 'Create Directory', type: ['Post'], what: ['folder'] },//13
+          { label: 'Update Directory', type: ['Put'], what: ['folder'] },//14
+          { label: 'Retrieve Directory/Folder at time', type: ['Get'], what: ['folder'] },//15
+          { label: 'Retrieve Directory/Folder by version', type: ['Get'], what: ['folder'] },//16
+          { label: 'Delete Directory/Folder', type: ['Del'], what: ['folder'] },//17
+
         ]
       };
       return methods['methods'] || [];
@@ -300,18 +317,23 @@ export default defineComponent({
     // Get actions associated with the selected method
     getActionsForMethod(index) {
       const actions = [
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_sid_sns' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid_post' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid_sid_sns_post' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_update' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_at_time' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_by_version' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_info' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_history' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_at_time' }],
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_by_version' }],
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid' }],//1
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_sid_sns' }],//2
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid_post' }],//3
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrid_sid_sns_post' }],//4
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus' }],//5
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_update' }],//6
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_at_time' }],//7
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_by_version' }],//8
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_info' }],//9
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_history' }],//10
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_at_time' }],//11
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_ehrstatus_get_versioned_by_version' }],//12
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_folder' }],//13
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_folder_update' }],//14
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_folder_get_at_time' }],//15
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_folder_get_by_version' }],//16        
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_folder_delete' }],//17
 
       ];
       return actions[index] || [];
@@ -319,33 +341,56 @@ export default defineComponent({
     // Get input parameters for the selected method
     getParamsForMethod(index) {
       const params = [
-        [
+        [//1
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
           // { label: '1 GET', value: "", type: 'text' }
         ],
-        [
+        [//2
           { label: 'SubjectId', value: '', type: 'text', placeholder: "Patient1234" },
           { label: 'SubjectNameSpace', value: '', type: 'text', placeholder: "Acme" },
           // { label: '2 GET', value: "", type: 'text' }
         ],
-        [
+        [//3
           { label: 'EHRid (optional)', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
           // { label: '1 POST', value: "", type: 'text' }
         ],
-        [
+        [//4
           { label: 'EHRid (optional)', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'SubjectId', value: '', type: 'text', placeholder: "Patient1234" },
           { label: 'SubjectNameSpace', value: '', type: 'text', placeholder: "Acme" },
           // { label: '2 POST', value: "", type: 'text' }
         ],
-        [],
-        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
-        { label: 'EHRStatus versioned id', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
-        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Timestamp (optional)', value: '', type: 'text', placeholder: "2020-01-20T16:40:07.227+01:00" }],
-        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'EHRStatus versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
-        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],
-        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],
-        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Timestamp (optional)', value: '', type: 'text', placeholder: "2020-01-20T16:40:07.227+01:00" }],
-        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'EHRStatus versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
+        [],//5
+        [//6
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'EHRStatus versioned id', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
+        [//7
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'At time (optional)', value: '', type: 'text', placeholder: "2020-01-20T16:40:07.227+01:00" }],
+        [//8
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'EHRStatus versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
+        [//9
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],
+        [//10
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],
+        [//11
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'At time (optional)', value: '', type: 'text', placeholder: "2020-01-20T16:40:07.227+01:00" }],
+        [//12
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'EHRStatus versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
+        [//13
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],
+        [//14
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Directory folder versioned id', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
+        [//15
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'Path (optional)', value: '', type: 'text' }, { label: 'At time (optional)', value: '', type: 'text', placeholder: "2050-01-20T16:40:07.227+01:00" }
+        ],
+        [//16
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'Path (optional)', value: '', type: 'text' }, { label: 'Directory folder versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }
+        ],
+        [//17
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'Directory folder versioned id', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }
+        ],
 
       ];
       return params[index] || [];
@@ -513,7 +558,7 @@ export default defineComponent({
         console.log('inside submit_ehrstatus_get_at_time')
         this.resultsOK = false;
         const ehrid = this.currentParams.find(p => p.label === 'EHRid');
-        const timestamp = this.currentParams.find(p => p.label === 'Timestamp (optional)');
+        const timestamp = this.currentParams.find(p => p.label === 'At time (optional)');
         this.timestamp = timestamp?.value || "";
         console.log('timestamp is', this.timestamp);
 
@@ -603,7 +648,7 @@ export default defineComponent({
         console.log('inside submit_ehrstatus_get_versioned_at_time')
         this.resultsOK = false;
         const ehrid = this.currentParams.find(p => p.label === 'EHRid');
-        const timestamp = this.currentParams.find(p => p.label === 'Timestamp (optional)');
+        const timestamp = this.currentParams.find(p => p.label === 'At time (optional)');
         this.timestamp = timestamp?.value || "";
         console.log('timestamp is', this.timestamp);
 
@@ -646,6 +691,145 @@ export default defineComponent({
           this.results = 'EHRid is required';
         }
       }
+      else if (action == 'submit_folder') //post directory
+      {
+        console.log('inside submit_folder')
+        this.resultsOK = false;
+        if (!this.selectedFile) {
+          this.results = 'Please select a Directory folder file'
+          return;
+        }
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        console.log('ehrid is', ehrid?.value);
+        if (!ehrid?.value) {
+          this.results = 'EHRid is required';
+          return;
+        }
+        try {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            try {
+              const folder = JSON.parse(reader.result);
+              console.log('folder is', folder);
+              const ehrResults = await this.postdirectory(ehrid.value, folder);
+              console.log('results', ehrResults);
+              this.results = JSON.stringify(ehrResults, null, 2);
+            }
+            catch (error) {
+              console.error("Error uploading JSON file:", error);
+              this.results = `Error: ${error.message}`;
+            }
+          };
+          reader.readAsText(this.selectedFile);
+        }
+        catch (error2) {
+          console.error("Error in postdirectory:", error2);
+          this.results = `Error: ${error2.message}`;
+        }
+      }
+      else if (action == 'submit_folder_update') //put directory
+      {
+        console.log('inside submit_folder_update')
+        this.resultsOK = false;
+        if (!this.selectedFile) {
+          this.results = 'Please select a Directory folder file'
+          return;
+        }
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        console.log('ehrid is', ehrid?.value);
+        if (!ehrid?.value) {
+          this.results = 'EHRid is required';
+          return;
+        }
+        const versionedid = this.currentParams.find(p => p.label === 'Directory folder versioned id');
+        if (!versionedid?.value) {
+          this.results = 'Directory folder versioned id is required';
+          return;
+        }
+        try {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            try {
+              const folder = JSON.parse(reader.result);
+              console.log('folder is', folder);
+              const ehrResults = await this.putdirectory(ehrid.value, folder, versionedid.value);
+              console.log('results', ehrResults);
+              this.results = JSON.stringify(ehrResults, null, 2);
+            }
+            catch (error) {
+              console.error("Error uploading JSON file:", error);
+              this.results = `Error: ${error.message}`;
+            }
+          };
+          reader.readAsText(this.selectedFile);
+        }
+        catch (error2) {
+          console.error("Error in putdirectory:", error2);
+          this.results = `Error: ${error2.message}`;
+        }
+      }
+      else if (action == 'submit_folder_get_at_time') //get directory at time 
+      {
+        console.log('inside submit_folder_get_at_time')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        const timestamp = this.currentParams.find(p => p.label === 'At time (optional)');
+        this.timestamp = timestamp?.value || "";
+        console.log('timestamp is', this.timestamp);
+        const path = this.currentParams.find(p => p.label === 'Path (optional)');
+        this.path = path?.value || "";
+        console.log('path is', this.path);
+
+
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
+          try {
+            const ehrResults = await this.getdirectoryattime(ehrid.value, this.timestamp, this.path);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
+          }
+          catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
+      else if (action == 'submit_folder_get_by_version') //get folder by version
+      {
+        console.log('inside submit_folder_get_by_version')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        const version = this.currentParams.find(p => p.label === 'Directory folder versioned id (optional)');
+        this.version = version?.value || "";
+        console.log('version is', this.version);
+        const path = this.currentParams.find(p => p.label === 'Path (optional)');
+        this.path = path?.value || "";
+
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
+          try {
+            const ehrResults = await this.getdirectorybyversion(ehrid.value, this.version, this.path);
+            console.log('results', ehrResults);
+            this.results = JSON.stringify(ehrResults, null, 2);
+          }
+          catch (error) {
+            console.error("Error in executeAction:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
+
+
+
+
+
+
+
+
 
 
 
@@ -1399,6 +1583,166 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
+    async postdirectory(ehrid, folder) {
+      console.log('inside postdirectory')
+      console.log('folder=', folder);
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      const folderstring = JSON.stringify(folder);
+      // await this.sleep(5000);
+      try {
+        console.log('before post');
+        const response = await axios.post(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+          { "directory": folderstring },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
+          });
+        return response.data.folder;
+      }
+      catch (error) {
+        console.error("Error in postdirectory:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async putdirectory(ehrid, folder, foldervid) {
+      console.log('inside putdirectory')
+      console.log('folder=', folder);
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      const folderstring = JSON.stringify(folder);
+      // await this.sleep(5000);
+      try {
+        const response = await axios.put(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+          { "directory": folderstring, "directoryVersionedId": foldervid },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
+          });
+        return response.data.folder;
+      }
+      catch (error) {
+        console.error("Error in postdirectory:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getdirectoryattime(ehrid, timestamp, path) {
+      console.log('inside getdirectoryattime')
+      console.log(ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        console.log('before get')
+        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              data: timestamp,
+              path: path
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.folder;
+      }
+      catch (error) {
+        console.error("Error in getdorectoryattime:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getdirectorybyversion(ehrid, version, path) {
+      console.log('inside getdirectorybyversion')
+      console.log(ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        console.log('before get')
+        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              data: version,
+              path: path
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.folder;
+      }
+      catch (error) {
+        console.error("Error in getdirectorybyversion:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+
+
 
 
 
