@@ -28,7 +28,7 @@ from app.models.ehr.ehr import (
     EhrStatusGetPut,
     DirectoryPost,
     DirectoryPut,
-    DirectoryDelete,
+    get_enum_value,
 )
 from datetime import datetime
 
@@ -725,6 +725,7 @@ async def get_directory(
     ehrid: UUID,
     data: Optional[str] = Query(None),
     path: Optional[str] = Query(None),
+    format: str = Query(None),
     redis_client: redis.StrictRedis = Depends(get_redis_client),
     token: str = Depends(get_token_from_header),
 ):
@@ -736,6 +737,8 @@ async def get_directory(
         raise HTTPException(status_code=401, detail="Unauthorized")
     option = 0
     logger.debug(f"dddddddata={data}")
+    logger.debug(f"ddddddformat={format}")
+    format = get_enum_value(format)
     try:
         if data == "" or data == None:
             option = 1
@@ -760,10 +763,12 @@ async def get_directory(
         logger.debug(f"data={data}")
         logger.debug(f"option={option}")
         logger.debug(f"ehrid={ehrid}")
+        logger.debug(f"path={path}")
+        logger.debug(f"format={format}")
         ehrid = str(ehrid)
         url_base = request.app.state.url_base
         response = await get_directory_ehrbase(
-            request, auth, url_base, ehrid, data, path, option
+            request, auth, url_base, ehrid, data, path, option, format
         )
         if option == 1:
             insertlogline(
@@ -790,7 +795,10 @@ async def get_directory(
                 + data
                 + " retrieved successfully",
             )
-        return JSONResponse(content={"folder": response["json"]}, status_code=200)
+        if format == "json":
+            return JSONResponse(content={"folder": response["json"]}, status_code=200)
+        elif format == "xml":
+            return JSONResponse(content={"folder": response["xml"]}, status_code=200)
     except Exception as e:
         logger.error(f"An exception occurred during get_directory: {e}")
         if 400 <= e.status_code < 500:

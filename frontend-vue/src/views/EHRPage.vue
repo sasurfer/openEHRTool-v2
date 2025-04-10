@@ -74,9 +74,19 @@
             <h3>Input Parameters</h3>
           </div>
           <form @submit.prevent="submitForm">
+
             <div v-for="(param, index) in currentParams" :key="index" class="form-group">
               <label>{{ param.label }}:</label>
               <input v-model="param.value" :type="param.type" :placeholder="param.placeholder" />
+            </div>
+
+            <div v-for="(radioparam, radioIndex) in currentRadioParams" :key="radioIndex" class="form-check-group">
+              <label>{{ radioparam.label }}:</label>
+              <div v-for="(option, optionIndex) in radioparam.options" :key="optionIndex" class="form-check">
+                <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
+                  :value="option" v-model="radioparam.selected" class="form-check-input" />
+                <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option }}</label>
+              </div>
             </div>
 
             <div v-if="currentFile" class="file-input">
@@ -150,6 +160,7 @@ import axios from 'axios';  // Import axios for making HTTP requests
 import Circle4Spinner from '@/components/ui/Circle4Spinner.vue';
 
 
+
 export default defineComponent({
   name: 'EHRPage',
   components: {
@@ -164,6 +175,7 @@ export default defineComponent({
   },
   data() {
     return {
+      resultsName: 'results.json',
       methodType: "Get",
       onwhat: "ehr",
       resultsOK: false,
@@ -189,6 +201,7 @@ export default defineComponent({
       methodActions: [],
       currentMethods: [],
       currentParams: [],
+      currentRadioParams: [],
       currentFile: false,
       labelFile: null,
       results: null,
@@ -206,7 +219,7 @@ export default defineComponent({
   computed: {
     filteredMethods() {
       return this.currentMethods.filter(method => method.type.includes(this.methodType) && method.what.includes(this.onwhat));
-    }
+    },
   },
   mounted() {
     // Fetch data when the component is first mounted
@@ -273,6 +286,7 @@ export default defineComponent({
     },
     selectMethod(index) {
       this.resultsOK = false;
+      this.resultsName = 'results.json';
       this.currentMethods = this.getMethodsForEHR();
       const index2 = this.getIndexByTypeWhat(this.currentMethods, index, this.methodType, this.onwhat)
       console.log("index", index)
@@ -281,6 +295,7 @@ export default defineComponent({
       // this.selectedMethodIndex = index;
       this.methodActions = this.getActionsForMethod(index2);
       this.currentParams = this.getParamsForMethod(index2);
+      this.currentRadioParams = this.getRadioParamsForMethod(index2);
       this.needFile = this.getNeedFile(index2);
       this.currentFile = this.needFile.file;
       this.labelFile = this.needFile.label;
@@ -338,6 +353,28 @@ export default defineComponent({
       ];
       return actions[index] || [];
     },
+    getRadioParamsForMethod(index) {
+      const radioParams = [
+        [],//1
+        [],//2
+        [],//3
+        [],//4
+        [],//5  
+        [],//6
+        [],//7
+        [],//8
+        [],//9
+        [],//10
+        [],//11
+        [],//12
+        [],//13
+        [],//14
+        [{ label: 'Output Format', selected: "JSON", options: ['JSON', 'XML'] }],//15
+        [{ label: 'Output Format', selected: "JSON", options: ['JSON', 'XML'] }],//16
+        [],//17
+      ];
+      return radioParams[index] || [];
+    },
     // Get input parameters for the selected method
     getParamsForMethod(index) {
       const params = [
@@ -381,7 +418,7 @@ export default defineComponent({
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Directory folder versioned id', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
         [//15
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
-          { label: 'Path (optional)', value: '', type: 'text' }, { label: 'At time (optional)', value: '', type: 'text', placeholder: "2050-01-20T16:40:07.227+01:00" }
+          { label: 'Path (optional)', value: '', type: 'text' }, { label: 'At time (optional)', value: '', type: 'text', placeholder: "2050-01-20T16:40:07.227+01:00" },
         ],
         [//16
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
@@ -779,14 +816,23 @@ export default defineComponent({
         const path = this.currentParams.find(p => p.label === 'Path (optional)');
         this.path = path?.value || "";
         console.log('path is', this.path);
+        this.format = this.currentRadioParams.find(p => p.label === 'Output Format')?.selected || "JSON";
+        console.log('format is', this.format);
 
 
         if (ehrid.value) {
           console.log('ehrid is', ehrid.value);
           try {
-            const ehrResults = await this.getdirectoryattime(ehrid.value, this.timestamp, this.path);
+            const ehrResults = await this.getdirectoryattime(ehrid.value, this.timestamp, this.path, this.format);
             console.log('results', ehrResults);
-            this.results = JSON.stringify(ehrResults, null, 2);
+            if (this.format.toLowerCase() == 'xml') {
+              this.resultsName = 'results.xml';
+              this.results = this.formatXml(ehrResults);
+            }
+            else {
+              this.resultsName = 'results.json';
+              this.results = JSON.stringify(ehrResults, null, 2);
+            }
           }
           catch (error) {
             console.error("Error in executeAction:", error);
@@ -806,13 +852,22 @@ export default defineComponent({
         console.log('version is', this.version);
         const path = this.currentParams.find(p => p.label === 'Path (optional)');
         this.path = path?.value || "";
+        this.format = this.currentRadioParams.find(p => p.label === 'Output Format')?.selected || "JSON";
+        console.log('format is', this.format);
 
         if (ehrid.value) {
           console.log('ehrid is', ehrid.value);
           try {
-            const ehrResults = await this.getdirectorybyversion(ehrid.value, this.version, this.path);
+            const ehrResults = await this.getdirectorybyversion(ehrid.value, this.version, this.path, this.format);
             console.log('results', ehrResults);
-            this.results = JSON.stringify(ehrResults, null, 2);
+            if (this.format.toLowerCase() == 'xml') {
+              this.resultsName = 'results.xml';
+              this.results = this.results = this.formatXml(ehrResults);
+            }
+            else {
+              this.resultsName = 'results.json';
+              this.results = JSON.stringify(ehrResults, null, 2);
+            }
           }
           catch (error) {
             console.error("Error in executeAction:", error);
@@ -1114,11 +1169,15 @@ export default defineComponent({
     },
     async saveResultsToFile() {
       const content = this.results;
-      const blob = new Blob([content], { type: "application/json" });
+      // --- Determine MIME type based on filename ---
+      const fileExtension = this.resultsName.split('.').pop().toLowerCase();
+      const mimeType = fileExtension === 'xml' ? 'application/xml' : 'application/json';
+      // --- ---
+      const blob = new Blob([content], { type: mimeType });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'results.json';
+      link.download = this.resultsName || 'results.json';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1681,7 +1740,7 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-    async getdirectoryattime(ehrid, timestamp, path) {
+    async getdirectoryattime(ehrid, timestamp, path, format) {
       console.log('inside getdirectoryattime')
       console.log(ehrid)
       console.log(localStorage.getItem("authToken"))
@@ -1697,7 +1756,8 @@ export default defineComponent({
             },
             params: {
               data: timestamp,
-              path: path
+              path: path,
+              format: format
             },
             timeout: 2000000,
           });
@@ -1722,7 +1782,7 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-    async getdirectorybyversion(ehrid, version, path) {
+    async getdirectorybyversion(ehrid, version, path, format) {
       console.log('inside getdirectorybyversion')
       console.log(ehrid)
       console.log(localStorage.getItem("authToken"))
@@ -1738,7 +1798,8 @@ export default defineComponent({
             },
             params: {
               data: version,
-              path: path
+              path: path,
+              format: format
             },
             timeout: 2000000,
           });
@@ -1803,7 +1864,29 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
+    formatXml(xml) {
+      let formatted = '';
+      const reg = /(>)(<)(\/*)/g;
+      xml = xml.replace(reg, '$1\n$2$3'); // Ensuring proper line breaks between tags
 
+      let pad = 0;
+      xml.split('\n').forEach(node => {
+        // Decrease indentation before closing tags
+        if (node.match(/^<\/\w/)) {
+          pad -= 1;
+        }
+
+        // Add indentation and the node itself
+        formatted += '  '.repeat(Math.max(pad, 0)) + node + '\n'; // Ensure pad is not negative
+
+        // Increase indentation after opening tags (not self-closing)
+        if (node.match(/^<[^!/?\w]/) && !node.endsWith('/>')) {
+          pad += 1;
+        }
+      });
+
+      return formatted;
+    }
 
 
 
@@ -2035,5 +2118,37 @@ method-actions {
   border-radius: 5px;
   /* Optional: rounded corners */
   margin-bottom: 10px;
+}
+
+
+.form-check-group {
+  display: flex;
+  justify-content: space-between;
+  /* Distributes items evenly */
+  align-items: center;
+  width: 30%;
+  margin-left: 30%;
+  /* Ensures the container spans the full width */
+}
+
+.form-check {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  /* margin-right: 0px; */
+  margin-bottom: 5px;
+  /* min-width: 0px; */
+  text-align: center;
+  /* padding: 0px; */
+}
+
+/* 
+.form-check-input {
+  margin: 0 0 3px 0;
+} */
+
+.form-check-label {
+  /* margin: 0; */
+  font-size: 0.9em;
 }
 </style>

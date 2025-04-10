@@ -12,6 +12,7 @@ from app.backend_ehrbase import (
     fetch_put_data,
     fetch_delete_data,
 )
+from lxml import etree
 
 
 async def get_ehr_by_ehrid_ehrbase(
@@ -386,6 +387,7 @@ async def get_directory_ehrbase(
     data: str,
     path: str,
     option: int,
+    format: str,
 ):
     logger = get_logger(request)
     logger.debug("inside get_directory_ehrbase")
@@ -397,10 +399,17 @@ async def get_directory_ehrbase(
             params["path"] = path
         headers = {
             "Authorization": auth,
-            "Content-Type": "application/json",
             "Prefer": "return=representation",
-            "accept": "application/json",
         }
+        if format == "xml":
+            headers["accept"] = "application/xml"
+            headers["Content-Type"] = "application/xml"
+        elif format == "json":
+            headers["accept"] = "application/json"
+            headers["Content-Type"] = "application/json"
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid enum value: {format}")
+
         if option == 3:  # data=versionedid
             myurl = url_normalize(url_base + "ehr/" + ehrid + "/directory/" + data)
         elif option == 2:  # data=version_at_time
@@ -418,7 +427,22 @@ async def get_directory_ehrbase(
         myresp["status_code"] = response.status_code
         if 200 <= response.status_code < 210:
             myresp["status"] = "success"
-            myresp["json"] = json.loads(response.text)
+            if format == "xml":
+                xmlstringwithencoding = response.text
+                positionfirstgreaterthan = xmlstringwithencoding.find(">")
+                if (
+                    "encoding"
+                    in xmlstringwithencoding[0 : positionfirstgreaterthan + 1]
+                ):
+                    xmlstring = xmlstringwithencoding[positionfirstgreaterthan + 1 :]
+                else:
+                    xmlstring = xmlstringwithencoding
+                root = etree.fromstring(xmlstring)
+                myresp["xml"] = etree.tostring(
+                    root, encoding="unicode", method="xml", pretty_print=True
+                )
+            elif format == "json":
+                myresp["json"] = json.loads(response.text)
         return myresp
 
 
