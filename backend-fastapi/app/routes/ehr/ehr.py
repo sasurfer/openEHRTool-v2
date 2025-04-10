@@ -16,6 +16,7 @@ from app.backend_ehrbase.ehr.ehr import (
     post_directory_ehrbase,
     put_directory_ehrbase,
     get_directory_ehrbase,
+    delete_directory_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
@@ -27,6 +28,7 @@ from app.models.ehr.ehr import (
     EhrStatusGetPut,
     DirectoryPost,
     DirectoryPut,
+    DirectoryDelete,
 )
 from datetime import datetime
 
@@ -813,4 +815,54 @@ async def get_directory(
             print(f"An exception occurred during get_directory: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during get_directory"
+            )
+
+
+@router.delete("/{ehrid}/directory")
+async def delete_directory(
+    request: Request,
+    ehrid: UUID,
+    directoryversionedId: VersionedObjectId = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_directory")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        logger.debug(f"data={directoryversionedId}")
+        logger.debug(f"ehrid={ehrid}")
+        ehrid = str(ehrid)
+        version = str(directoryversionedId)
+        url_base = request.app.state.url_base
+        response = await delete_directory_ehrbase(
+            request, auth, url_base, ehrid, version
+        )
+        insertlogline(
+            redis_client,
+            "Delete EHR directory: directory for ehrid="
+            + ehrid
+            + " versionededId="
+            + str(directoryversionedId)
+            + " deleted successfully",
+        )
+
+        return JSONResponse(content={"folder": response["json"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during get_directory: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Delete EHR directory: not successful for ehr {ehrid} versionedId {directoryversionedId}",
+            )
+            return JSONResponse(
+                content={"folder": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during delete_directory: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during delete_directory"
             )

@@ -420,3 +420,38 @@ async def get_directory_ehrbase(
             myresp["status"] = "success"
             myresp["json"] = json.loads(response.text)
         return myresp
+
+
+async def delete_directory_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    ehrid: str,
+    versionid: str,
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_directory_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        myurl = url_normalize(url_base + "ehr/" + ehrid + "/directory")
+        params = {}
+        headers = {
+            "Authorization": auth,
+            "Content-Type": "application/JSON",
+            "Accept": "application/json",
+            "Prefer": "return=representation",
+            "If-Match": versionid,
+        }
+        response = await fetch_delete_data(
+            client=client, url=myurl, headers=headers, params=params, timeout=20000
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["json"] = {
+                "status": myresp["status"],
+                "ehrid": ehrid,
+                "directoryVersionedId": versionid,
+            }
+        return myresp

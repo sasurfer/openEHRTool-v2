@@ -822,7 +822,30 @@ export default defineComponent({
           this.results = 'EHRid is required';
         }
       }
-
+      else if (action == 'submit_folder_delete') //delete  directory
+      {
+        console.log('inside submit_folder_delete')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        const version = this.currentParams.find(p => p.label === 'Directory folder versioned id');
+        if (!ehrid?.value) {
+          this.results = 'EHRid is required';
+          return;
+        }
+        if (!version?.value) {
+          this.results = 'Directory folder versioned id is required';
+          return;
+        }
+        try {
+          const ehrResults = await this.deletedirectory(ehrid.value, version.value);
+          console.log('results', ehrResults);
+          this.results = JSON.stringify(ehrResults, null, 2);
+        }
+        catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
+        }
+      }
 
 
 
@@ -1740,7 +1763,46 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
+    async deletedirectory(ehrid, version) {
+      console.log('inside deletedirectory')
+      console.log(ehrid)
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        console.log('before get')
+        const response = await axios.delete(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              value: version
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.folder;
+      }
+      catch (error) {
+        console.error("Error in deletedirectory:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
 
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
 
 
