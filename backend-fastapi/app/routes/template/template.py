@@ -12,7 +12,7 @@ import redis
 from app.dependencies.redis_dependency import get_redis_client
 from typing import Optional
 import json
-from app.models.ehr.ehr import (
+from app.models.template.template import (
     get_template_enum_value,
 )
 from datetime import datetime

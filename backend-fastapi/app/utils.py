@@ -4,34 +4,38 @@ from datetime import datetime
 import asyncio
 from fastapi import Request
 
-def getauth(username,password):
-    message=username+":"+password
-    message_bytes = message.encode('ascii')
+
+def getauth(username, password):
+    message = username + ":" + password
+    message_bytes = message.encode("ascii")
     base64_bytes = base64.b64encode(message_bytes)
-    base64_message = base64_bytes.decode('ascii')
-    auth="Basic "+base64_message
+    base64_message = base64_bytes.decode("ascii")
+    auth = "Basic " + base64_message
     return auth
 
-def setEHRbasepaths(input_url):
-    '''set base paths for EHRBase'''
-    url_base            = input_url + "rest/openehr/v1/"
-    url_base_ecis       = input_url + "rest/ecis/v1/"
-    url_base_admin      = input_url + "rest/admin/"
-    url_base_management = input_url + "management/"
-    url_base_status     = input_url + "rest/status"
-    return url_base,url_base_ecis,url_base_admin,url_base_management,url_base_status
 
-def insertlogline(redis_client,line):
-    if get_redis_status(redis_client)=='ok':
+def setEHRbasepaths(input_url):
+    """set base paths for EHRBase"""
+    url_base = input_url + "rest/openehr/v1/"
+    url_base_ecis = input_url + "rest/ecis/v1/"
+    url_base_admin = input_url + "rest/admin/"
+    url_base_management = input_url + "management/"
+    url_base_status = input_url + "rest/status"
+    return url_base, url_base_ecis, url_base_admin, url_base_management, url_base_status
+
+
+def insertlogline(redis_client, line):
+    if get_redis_status(redis_client) == "ok":
         now = datetime.now()
         timestamp = now.strftime("%Y/%m/%d-%H:%M:%S-")
-        mykey='log'
+        mykey = "log"
         try:
-            redis_client.rpush(mykey,timestamp+line)
+            redis_client.rpush(mykey, timestamp + line)
         except Exception as e:
-            return 'error:',e
+            return "error:", e
     else:
-        return 'error: redis not initialized'
+        return "error: redis not initialized"
+
 
 def check_event_loop_status():
     loop = asyncio.get_event_loop()
@@ -40,5 +44,26 @@ def check_event_loop_status():
     else:
         print("Event loop is not running.")
 
+
 def get_logger(request: Request):
     return request.app.state.logger
+
+
+class EHRBaseVersion(Exception):
+    def __init__(self, message="Error in parsing ehrbase version"):
+        self.message = message
+        super().__init__(self.message)
+
+
+def compareEhrbaseVersions(runningversion, specificversion):
+    if runningversion == "latest":
+        return 1
+    if not runningversion[-1].isdigit():
+        raise EHRBaseVersion(code=400, message="Error in parsing ehrbase version")
+    rv = runningversion.split(".")
+    sv = specificversion.split(".")
+    for r, s in zip(rv, sv):
+        if int(r) > int(s):
+            return 1
+        elif int(r) < int(s):
+            return 0

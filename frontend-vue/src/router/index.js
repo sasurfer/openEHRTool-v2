@@ -20,9 +20,15 @@ const routes = [
   },
   {
     path: '/ehr',
-    name : 'ehr',
+    name: 'ehr',
     component: () => import('@/views/EHRPage.vue'),
     meta: { sidebarIndex: 2 }, // EHR icon is index 2
+  },
+  {
+    path: '/template',
+    name: 'template',
+    component: () => import('@/views/TemplatePage.vue'),
+    meta: { sidebarIndex: 3 }, // EHR icon is index 2
   },
 ];
 

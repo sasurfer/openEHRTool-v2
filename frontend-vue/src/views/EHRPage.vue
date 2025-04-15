@@ -2018,19 +2018,18 @@ method-actions {
 .parameter-form .action-button {
   background-color: #a5a5a5;
 }
-
 .results-section {
-  flex: 1;
-  background-color: #fff;
-  padding: 20px;
-  background-color: #fff;
+  max-width: 100%;
   overflow-x: auto;
-  /* Add horizontal scroll to results section */
+  /* Horizontal scroll */
   overflow-y: hidden;
-  /* Disable vertical scroll */
-  white-space: nowrap;
-  /* Prevent text wrapping */
+  border: 1px solid #ccc;
+  padding: 10px;
+  background-color: #fff;
+  box-sizing: border-box;
+  margin-top: 20px;
 }
+
 
 .results-section pre {
   font-size: 14px;
@@ -2044,22 +2043,46 @@ method-actions {
 }
 
 .results-container {
-  width: 100%;
-  overflow-x: auto;
+  /* width: 100%; */
+  /* overflow-x: auto; */
   /* Enable horizontal scrolling */
-  overflow-y: hidden;
+  /* overflow-y: hidden; */
   /* Disable vertical scrolling */
-  white-space: nowrap;
+  /* white-space: nowrap; */
   /* Prevent text wrapping */
-  padding: 10px;
-  /* Add some padding */
+  /* padding: 10px;
   border: 1px solid #ccc;
-  margin-bottom: 10px;
+  margin-bottom: 10px; */
+  padding: 0;
+  margin: 0;
+  border: none;
 }
 
-.result-content {
-  width: fit-content;
+
+.results-content {
+  display: inline-block;
+  /* Prevent full-width stretch */
+  min-width: 100%;
+  /* Ensures it doesn't collapse */
 }
+
+pre {
+  background-color: #f8f8f8 !important;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+::v-deep .results-content pre {
+  background-color: #f8f8f8;
+  padding: 10px;
+  margin: 0;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  white-space: pre;
+  overflow-x: auto;
+}
+
 
 .no-method {
   display: flex;

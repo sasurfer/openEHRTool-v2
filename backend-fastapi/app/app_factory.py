@@ -9,7 +9,7 @@ from app.routes.auth.login import router as auth_router
 from app.routes.home.dashboard import router as dashboard_router
 from app.routes.sidebar.rsidebar.info import router as rsidebar_router
 from app.routes.ehr.ehr import router as ehr_router
-
+from app.routes.template.template import router as template_router
 
 
 async def lifespan(app: FastAPI):
@@ -21,6 +21,7 @@ async def lifespan(app: FastAPI):
 
     # Properly close the HTTP client on shutdown
     client.close()
+
 
 def create_app():
     # Initialize FastAPI app
@@ -39,7 +40,7 @@ def create_app():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger("my_logger")
     app.state.logger = logger
-    logger.debug('created app and added logger')
+    logger.debug("created app and added logger")
 
     # Add Redis client to FastAPI's state
     app.state.secret_key = Config.SECRET_KEY
@@ -50,5 +51,6 @@ def create_app():
     app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
     app.include_router(rsidebar_router, prefix="/rsidebar", tags=["rsidebar"])
     app.include_router(ehr_router, prefix="/ehr", tags=["ehr"])
+    app.include_router(template_router, prefix="/template", tags=["template"])
 
     return app
