@@ -12,6 +12,12 @@
       <div class="radio-group-container">
         <div class="radio-group">
           <label>
+            <input type="radio" v-model="methodType" value="All" />
+            All
+          </label>
+        </div>
+        <div class="radio-group">
+          <label>
             <input type="radio" v-model="methodType" value="Get" />
             Get
           </label>
@@ -218,7 +224,11 @@ export default defineComponent({
   },
   computed: {
     filteredMethods() {
-      return this.currentMethods.filter(method => method.type.includes(this.methodType) && method.what.includes(this.onwhat));
+      if (this.methodType === 'All') {
+        return this.currentMethods;
+      } else {
+        return this.currentMethods.filter(method => method.type.includes(this.methodType) && method.what.includes(this.onwhat));
+      }
     },
   },
   mounted() {
@@ -252,6 +262,9 @@ export default defineComponent({
         ? { backgroundColor: '#bad489', color: 'white' } : {};
     },
     getIndexByTypeWhat(arr, targetIndex, type, what) {
+      if (this.methodType === 'All') {
+        return targetIndex;
+      }
       let count = 0;
       for (let i = 0; i < arr.length; i++) {
         if (arr[i].type.includes(type) && arr[i].what.includes(what)) {
@@ -2018,6 +2031,7 @@ method-actions {
 .parameter-form .action-button {
   background-color: #a5a5a5;
 }
+
 .results-section {
   max-width: 100%;
   overflow-x: auto;
@@ -2066,14 +2080,8 @@ method-actions {
   /* Ensures it doesn't collapse */
 }
 
-pre {
-  background-color: #f8f8f8 !important;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
 
-::v-deep .results-content pre {
+.results-content pre {
   background-color: #f8f8f8;
   padding: 10px;
   margin: 0;
