@@ -6,6 +6,8 @@ from fastapi import HTTPException
 # from app.models import VersionedObjectId
 from enum import Enum
 
+from pydantic import BaseModel
+
 
 class formatEnum(str, Enum):
     json = "json"
@@ -24,3 +26,11 @@ def get_template_enum_value(value: str) -> templateFormatEnum:
         if item.value.lower() == value.lower():
             return value.lower()
     raise HTTPException(status_code=400, detail=f"Invalid template enum value: {value}")
+
+
+class TemplateRequest(BaseModel):
+    template: str
+
+
+class TemplatePost(TemplateRequest):
+    pass
