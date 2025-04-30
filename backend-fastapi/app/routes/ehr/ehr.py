@@ -28,7 +28,7 @@ from app.models.ehr.ehr import (
     EhrStatusGetPut,
     DirectoryPost,
     DirectoryPut,
-    get_enum_value,
+    get_ehr_enum_value,
 )
 from datetime import datetime
 
@@ -738,7 +738,7 @@ async def get_directory(
     option = 0
     logger.debug(f"dddddddata={data}")
     logger.debug(f"ddddddformat={format}")
-    format = get_enum_value(format)
+    format = get_ehr_enum_value(format)
     try:
         if data == "" or data == None:
             option = 1

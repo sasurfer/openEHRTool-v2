@@ -75,38 +75,43 @@
 
 
         <!-- Parameter Form Zone -->
-        <div class="parameter-form">
+        <div class="input-section">
           <div class="parameters-title">
-            <h3>Input Parameters</h3>
+            <h3>Input</h3>
           </div>
-          <form @submit.prevent="submitForm">
+          <div class="parameter-container">
+            <div class="parameter-form">
+              <form @submit.prevent="submitForm">
 
-            <div v-for="(param, index) in currentParams" :key="index" class="form-group">
-              <label>{{ param.label }}:</label>
-              <input v-model="param.value" :type="param.type" :placeholder="param.placeholder" />
-            </div>
+                <div v-for="(param, index) in currentParams" :key="index" class="form-group">
+                  <label>{{ param.label }}:</label>
+                  <input v-model="param.value" :type="param.type" :placeholder="param.placeholder" />
+                </div>
 
-            <div v-for="(radioparam, radioIndex) in currentRadioParams" :key="radioIndex" class="form-check-group">
-              <label>{{ radioparam.label }}:</label>
-              <div v-for="(option, optionIndex) in radioparam.options" :key="optionIndex" class="form-check">
-                <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
-                  :value="option" v-model="radioparam.selected" class="form-check-input" />
-                <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option }}</label>
-              </div>
-            </div>
+                <div v-for="(radioparam, radioIndex) in currentRadioParams" :key="radioIndex" class="form-check-group">
+                  <label>{{ radioparam.label }}:</label>
+                  <div v-for="(option, optionIndex) in radioparam.options" :key="optionIndex" class="form-check">
+                    <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
+                      :value="option" v-model="radioparam.selected" class="form-check-input" />
+                    <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
+                    }}</label>
+                  </div>
+                </div>
 
-            <div v-if="currentFile" class="file-input">
-              <label>{{ labelFile }}</label>
-              <input type="file" ref="fileInput" @change="handleFileUpload" />
-            </div>
+                <div v-if="currentFile" class="file-input">
+                  <label>{{ labelFile }}</label>
+                  <input type="file" ref="fileInput" @change="handleFileUpload" />
+                </div>
 
-            <div class="action-group">
-              <div v-for="(action, index) in methodActions" :key="index" class="action-button">
-                <!-- <button type="submit">{{ action.label }}</button> -->
-                <button @click="executeAction(action.action)">{{ action.label }}</button>
-              </div>
+                <div class="action-group">
+                  <div v-for="(action, index) in methodActions" :key="index" class="action-button">
+                    <!-- <button type="submit">{{ action.label }}</button> -->
+                    <button @click="executeAction(action.action)">{{ action.label }}</button>
+                  </div>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
 
         <!-- Separator Line between Top and Results -->
@@ -1944,24 +1949,17 @@ h1 {
 }
 
 .main-content {
-  /* padding-top: 0px;
-  padding-left: 60px;
-  padding-right: 60px;
-  margin-top: 0px;
-  margin-left: 20px;
-  margin-right: 20px; */
+  width: calc(100% - 290px);
   flex: 1;
-  padding: 40px;
-  padding-top: 0px;
+  margin-left: 260px;
+  margin-right: 60px;
   display: flex;
   flex-direction: column;
-  margin-top: 0px;
-  margin-bottom: 100px;
-  margin-right: 30px;
-  margin-left: 220px;
-  position: relative;
+  align-items: stretch;
+  box-sizing: border-box;
   z-index: 0;
 }
+
 
 .method-selection-zone {
   /* margin-top: 0px;
@@ -1975,7 +1973,7 @@ h1 {
   /* Fix the method selection on the left */
   top: 0;
   left: 60px;
-  width: 180px;
+  width: 190px;
   /* You can adjust this width as needed */
   height: 100%;
   /* Take up the full height */
@@ -1997,30 +1995,46 @@ h1 {
   width: 100%;
 }
 
-method-actions {
+.method-actions {
   margin-bottom: 0px;
 }
 
-.parameter-form {
-  /* background-color: #a0a0a0; */
+.parameter-container {
+  width: 100%;
+  /* max-width: 1000px; */
   background-color: #f0f0f0;
   padding: 20px;
+  padding-top: 10px;
   margin-bottom: 20px;
-  flex: 1;
+  margin-top: 0px;
   border-radius: 8px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
 }
+
+
+.parameter-form {
+  flex: 0 0 90%;
+  /* background-color: white; */
+  box-sizing: border-box;
+}
+
 
 .parameters-title {
-  background-color: #f0f0f0;
+  width: 100%;
 }
 
-.parameter-form .form-group {
-  background-color: #f0f0f0;
-  margin-bottom: 10px;
-}
 
-.parameter-form .form-group input {
-  width: 255px;
+.parameter-form input,
+.parameter-form select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 30px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+
 }
 
 .parameter-form label {
@@ -2032,12 +2046,17 @@ method-actions {
   background-color: #a5a5a5;
 }
 
+.parameter-form .form-group {
+  margin-bottom: 30px;
+  /* Adjust the spacing between form groups */
+}
+
+
 .results-section {
+  width: 100%;
+  /* */
   max-width: 100%;
   overflow-x: auto;
-  /* Horizontal scroll */
-  overflow-y: hidden;
-  border: 1px solid #ccc;
   padding: 10px;
   background-color: #fff;
   box-sizing: border-box;
@@ -2048,6 +2067,12 @@ method-actions {
 .results-section pre {
   font-size: 14px;
   text-align: left;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  /* Or pre-line if you want to break lines more aggressively */
+  word-break: break-word;
+  /* Very important */
 }
 
 .separator {
@@ -2067,28 +2092,33 @@ method-actions {
   /* padding: 10px;
   border: 1px solid #ccc;
   margin-bottom: 10px; */
-  padding: 0;
-  margin: 0;
-  border: none;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 
+
 .results-content {
-  display: inline-block;
-  /* Prevent full-width stretch */
-  min-width: 100%;
-  /* Ensures it doesn't collapse */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
 }
 
 
 .results-content pre {
-  background-color: #f8f8f8;
-  padding: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
   margin: 0;
+  padding: 10px;
+  background-color: #f8f8f8;
   border: 1px solid #eee;
   border-radius: 4px;
-  white-space: pre;
-  overflow-x: auto;
+  margin-top: 10px;
+  /* max-width: 100%; */
+  /* box-sizing: border-box; */
 }
 
 
@@ -2099,10 +2129,12 @@ method-actions {
   height: 100px;
 }
 
+
 .action-group {
   display: flex;
   justify-content: center;
   gap: 10px;
+  margin-top: 30px;
 }
 
 .method-title {
@@ -2111,7 +2143,7 @@ method-actions {
 
 .file-input {
   padding: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   /* display: flex;
   flex-direction: column; */
 }
@@ -2148,38 +2180,61 @@ method-actions {
   /* Space between radio buttons and the border */
   border-radius: 5px;
   /* Optional: rounded corners */
-  margin-bottom: 10px;
+  margin-bottom: 30px;
 }
 
 
 .form-check-group {
   display: flex;
-  justify-content: space-between;
-  /* Distributes items evenly */
-  align-items: center;
-  width: 30%;
-  margin-left: 30%;
+  /* align-items: center; */
+  width: 100%;
+  column-gap: 20px;
+  margin-bottom: 25px;
+  /* margin-left: 30%; */
   /* Ensures the container spans the full width */
 }
 
+
 .form-check {
   display: inline-flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  /* align-items: center; */
   /* margin-right: 0px; */
-  margin-bottom: 5px;
+  /* margin-bottom: 100px; */
   /* min-width: 0px; */
-  text-align: center;
+  /* text-align: center; */
+  align-items: center;
+  margin-bottom: 0px;
+  padding: 0px;
+  line-height: 1;
+  row-gap: 0px;
+  height: auto;
   /* padding: 0px; */
 }
 
-/* 
+
 .form-check-input {
-  margin: 0 0 3px 0;
-} */
+  /* margin-top: 0px; */
+  margin-bottom: 0px;
+  padding: 0px;
+  vertical-align: top;
+  line-height: 1;
+  vertical-align: middle;
+}
 
 .form-check-label {
   /* margin: 0; */
-  font-size: 0.9em;
+  margin: 0px;
+  padding: 0px;
+  font-size: 0.7em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.results-button-save {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+  z-index: 1;
 }
 </style>

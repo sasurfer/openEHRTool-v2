@@ -4,15 +4,15 @@
       <h2>Stored Templates:</h2>
       <RotateSquare2 class='spinner' v-if="isLoading" :size="'40px'" :background="'#ff5733'"></RotateSquare2>
       <ul>
-        <li v-for="(item,index) in templateData" :key="index"
-        :class="{'odd-item': index % 2 !== 0, 'even-item': index % 2 === 0}">
-        {{ item.template_id }} {{ item.created_timestamp }}
+        <li v-for="(item, index) in templateData" :key="index"
+          :class="{ 'odd-item': index % 2 !== 0, 'even-item': index % 2 === 0 }">
+          {{ item.template_id }} {{ item.created_timestamp }}
         </li>
       </ul>
 
-      <div class="buttons">
+      <!-- <div class="buttons">
         <button @click="closeTemplateModal">Close</button>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -54,16 +54,16 @@ export default {
   justify-content: center;
   align-items: center;
   border-radius: 10px;
-  background-color:  #5e5d5d;
+  background-color: #5e5d5d;
 }
 
 .modal-content {
   background-color: #5e5d5d;
   color: white;
   border-radius: 10px;
-  width: 600px;
+  width: 700px;
   max-width: 100%;
-  height: 280px;
+  height: 300px;
   max-height: 100%;
   overflow-y: scroll;
   text-align: center
@@ -87,12 +87,15 @@ button:hover {
 }
 
 .even-item {
-  background-color:  #5e5d5d;; /* Light grey for even items */
+  background-color: #5e5d5d;
+  ;
+  /* Light grey for even items */
 }
 
 /* Style for odd items */
 .odd-item {
-  background-color: #912929; /* Slightly darker grey for odd items */
+  background-color: #912929;
+  /* Slightly darker grey for odd items */
 }
 
 .spinner {
@@ -103,4 +106,3 @@ button:hover {
   padding: 20px;
 }
 </style>
-

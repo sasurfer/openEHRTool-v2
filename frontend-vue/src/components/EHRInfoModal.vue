@@ -2,24 +2,24 @@
   <div class="modal" v-if="isVisible">
     <div class="modal-content">
       <h2>Stored EHRs:</h2>
-        <RotateSquare2 class='ehrspinner' v-if="isLoading" :size="'40px'" :background="'#ff5733'"></RotateSquare2>
+      <RotateSquare2 class='ehrspinner' v-if="isLoading" :size="'40px'" :background="'#ff5733'"></RotateSquare2>
       <ol>
-        <li v-for="(ehr,index) in ehrData" :key="ehr" 
-        :class="{'odd-item': index % 2 !== 0, 'even-item': index % 2 === 0}">
+        <li v-for="(ehr, index) in ehrData" :key="ehr"
+          :class="{ 'odd-item': index % 2 !== 0, 'even-item': index % 2 === 0 }">
           {{ ehr }}
         </li>
       </ol>
       <!-- Add more user information as needed -->
 
-      <div class="buttons">
+      <!-- <div class="buttons">
         <button @click="closeEHRModal">Close</button>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
 
 <script>
-import  RotateSquare2  from '@/components/ui/RotateSquare2.vue'; 
+import RotateSquare2 from '@/components/ui/RotateSquare2.vue';
 export default {
   props: {
     isVisible: {
@@ -29,7 +29,7 @@ export default {
     isLoading: {
       type: Boolean,
       required: true,
-    }, 
+    },
     ehrData: {
       type: Array,
       required: true,
@@ -55,7 +55,7 @@ export default {
   justify-content: center;
   align-items: center;
   border-radius: 10px;
-  background-color:  #5e5d5d;
+  background-color: #5e5d5d;
 }
 
 .modal-content {
@@ -64,7 +64,7 @@ export default {
   border-radius: 10px;
   width: 400px;
   max-width: 100%;
-  height: 280px;
+  height: 300px;
   max-height: 100%;
   overflow-y: scroll;
   text-align: center;
@@ -89,12 +89,15 @@ button:hover {
 }
 
 .even-item {
-  background-color:  #5e5d5d;; /* Light grey for even items */
+  background-color: #5e5d5d;
+  ;
+  /* Light grey for even items */
 }
 
 /* Style for odd items */
 .odd-item {
-  background-color: #912929; /* Slightly darker grey for odd items */
+  background-color: #912929;
+  /* Slightly darker grey for odd items */
 }
 
 .ehrspinner {
@@ -105,4 +108,3 @@ button:hover {
   padding: 20px;
 }
 </style>
-

@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '@/views/Login.vue';
 import HomePage from '@/views/HomePage.vue';
+import EHRPage from '@/views/EHRPage.vue';
+import TemplatePage from '@/views/TemplatePage.vue';
+import CompositionPage from '@/views/CompositionPage.vue';
 
 const routes = [
   {
@@ -21,15 +24,21 @@ const routes = [
   {
     path: '/ehr',
     name: 'ehr',
-    component: () => import('@/views/EHRPage.vue'),
+    component: EHRPage,
     meta: { sidebarIndex: 2 }, // EHR icon is index 2
   },
   {
     path: '/template',
     name: 'template',
-    component: () => import('@/views/TemplatePage.vue'),
-    meta: { sidebarIndex: 3 }, // EHR icon is index 2
+    component: TemplatePage,
+    meta: { sidebarIndex: 3 }, // Template icon is index 3
   },
+  {
+    path: '/composition',
+    name: 'composition',
+    component: CompositionPage,
+    meta: { sidebarIndex: 4 }, // Composition icon is index 4
+  }
 ];
 
 const router = createRouter({

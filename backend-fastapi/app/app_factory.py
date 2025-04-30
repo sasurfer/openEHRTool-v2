@@ -10,6 +10,7 @@ from app.routes.home.dashboard import router as dashboard_router
 from app.routes.sidebar.rsidebar.info import router as rsidebar_router
 from app.routes.ehr.ehr import router as ehr_router
 from app.routes.template.template import router as template_router
+from app.routes.composition.composition import router as composition_router
 
 
 async def lifespan(app: FastAPI):
@@ -52,5 +53,6 @@ def create_app():
     app.include_router(rsidebar_router, prefix="/rsidebar", tags=["rsidebar"])
     app.include_router(ehr_router, prefix="/ehr", tags=["ehr"])
     app.include_router(template_router, prefix="/template", tags=["template"])
+    app.include_router(composition_router, prefix="/composition", tags=["composition"])
 
     return app

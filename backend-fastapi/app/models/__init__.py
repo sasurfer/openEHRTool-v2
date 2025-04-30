@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator
 from uuid import UUID
+from enum import Enum
 
 
 class VersionedObjectId(BaseModel):
@@ -19,3 +20,10 @@ class VersionedObjectId(BaseModel):
 
     def __str__(self):
         return self.versionedId
+
+
+class formatEnum(str, Enum):
+    json = "json"
+    xml = "xml"
+    flat = "flat"
+    structured = "structured"

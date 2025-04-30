@@ -8,7 +8,7 @@
       @logout="logout" />
 
     <div class="method-selection-zone">
-      <h3><i>Template Methods</i></h3>
+      <h3><i>Composition Methods</i></h3>
       <div class="radio-group-container">
         <div class="radio-group">
           <label>
@@ -16,7 +16,6 @@
             All
           </label>
         </div>
-
         <div class="radio-group">
           <label>
             <input type="radio" v-model="methodType" value="Get" />
@@ -36,6 +35,10 @@
           </label>
         </div>
         <div class="radio-group">
+          <label>
+            <input type="radio" v-model="onwhat" value="composition" />
+            Composition
+          </label>
           <label>
             <input type="radio" v-model="onwhat" value="template" />
             Template
@@ -74,16 +77,14 @@
           </div>
           <div class="parameter-container">
             <div class="parameter-form">
-
               <form @submit.prevent="submitForm">
 
                 <div v-for="(param, index) in currentParams" :key="index" class="form-group">
                   <label>{{ param.label }}:</label>
 
-                  <!-- Existing Input for text, etc. -->
                   <input v-if="param.type !== 'select'" v-model="param.value" :type="param.type"
                     :placeholder="param.placeholder" />
-                  <!-- New Select Dropdown -->
+
                   <select v-else-if="param.type === 'select'" v-model="param.value" class="form-select">
                     <!-- Default disabled option -->
                     <option disabled value="">{{ placeholderText }}</option>
@@ -99,16 +100,13 @@
                   </p>
                 </div>
 
-
-
-
-
                 <div v-for="(radioparam, radioIndex) in currentRadioParams" :key="radioIndex" class="form-check-group">
                   <label>{{ radioparam.label }}:</label>
                   <div v-for="(option, optionIndex) in radioparam.options" :key="optionIndex" class="form-check">
                     <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
                       :value="option" v-model="radioparam.selected" class="form-check-input" />
-                    <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
+                    <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label"
+                      :class="{ 'label-even': optionIndex % 2 === 0, 'label-odd': optionIndex % 2 !== 0 }">{{ option
                       }}</label>
                   </div>
                 </div>
@@ -138,9 +136,7 @@
           <div class="results-container">
             <div class="results-content">
               <div v-if="resultsOK" class="flex justify-center items-center">
-                <div class="results-button-save">
-                  <button type="submit" @click="saveResultsToFile">Save Results to File</button>
-                </div>
+                <button type="submit" @click="saveResultsToFile">Save Results to File</button>
               </div>
               <pre>{{ results }}</pre>
             </div>
@@ -190,7 +186,7 @@ import Circle4Spinner from '@/components/ui/Circle4Spinner.vue';
 
 
 export default defineComponent({
-  name: 'TemplatePage',
+  name: 'CompositionPage',
   components: {
     Sidebar,
     UserInfoModal,
@@ -204,8 +200,8 @@ export default defineComponent({
   data() {
     return {
       resultsName: 'results.json',
-      methodType: "All",
-      onwhat: "template",
+      methodType: "Get",
+      onwhat: "composition",
       resultsOK: false,
       resultsFile: {},
       isLoading: false,
@@ -239,7 +235,6 @@ export default defineComponent({
       isLoadingAQL: false,
       selectedFile: null,
       templateNames: [],
-      templates: [],
       isLoadingTemplateNames: false,
       // selectedMethodIndex: null,
     };
@@ -269,7 +264,7 @@ export default defineComponent({
     this.fetchTemplateData();
     this.fetchCompositionData();
     this.fetchAQLData();
-    this.currentMethods = this.getMethodsForTemplate();
+    this.currentMethods = this.getMethodsForComposition();
   },
   watch: {
     '$route'() {
@@ -310,16 +305,24 @@ export default defineComponent({
     },
     getNeedFile(index) {
       const needFile = [
+        { file: true, label: 'Choose Composition File' },
+        { file: true, label: 'Choose Composition File' },
         { file: false, label: '' },
         { file: false, label: '' },
-        { file: true, label: 'Choose Template File' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: true, label: 'Choose Composition Files' },
+        { file: true, label: 'Choose Composition Files' }
       ];
       return needFile[index] || { file: false, label: '' };
     },
     selectMethod(index) {
       this.resultsOK = false;
-      this.resultsName = 'results.json';
-      this.currentMethods = this.getMethodsForTemplate();
+      this.resultsName = 'composition.json';
+      this.currentMethods = this.getMethodsForComposition();
       const index2 = this.getIndexByTypeWhat(this.currentMethods, index, this.methodType, this.onwhat)
       console.log("index", index)
       console.log("index2", index2)
@@ -334,16 +337,25 @@ export default defineComponent({
       console.log('currentfile', this.currentFile);
       console.log('labelFile', this.labelFile);
       this.results = null; // Reset results
-      if (index2 === 1) {
+      if (index2 < 2 || index2 > 7) {
         this.fetchTemplateNames();
       }
     },
-    getMethodsForTemplate() {
+    getMethodsForComposition() {
       const methods = {
         'methods': [
-          { label: 'List Templates', type: ['Get'], what: ['template'] },//1
-          { label: 'Retrieve Template by Name', type: ['Get'], what: ['template'] },//2
-          { label: 'Insert Template', type: ['Post'], what: ['template'] },//3
+          { label: 'Insert Composition', type: ['Post'], what: ['composition'] },//1
+          { label: 'Update Composition', type: ['Put'], what: ['composition'] },//2
+          { label: 'Retrieve Composition', type: ['Get'], what: ['composition'] },//3
+          { label: 'Retrieve versioned Composition info', type: ['Get'], what: ['composition'] },//4
+          { label: 'Retrieve versioned Composition revision history', type: ['Get'], what: ['composition'] },//5
+          { label: 'Retrieve versioned Composition at time', type: ['Get'], what: ['composition'] },//6
+          { label: 'Retrieve versioned Composition by version', type: ['Get'], what: ['composition'] },//7                         
+          { label: 'Delete Composition', type: ['Del'], what: ['composition'] },//8
+          { label: 'Retrieve Example Composition', type: ['Get'], what: ['composition', 'template'] },//9
+          { label: 'Batch Insert Compositions fixed EHRid', type: ['Post'], what: ['composition'] },//10
+          { label: 'Batch Insert Compositions different EHRid', type: ['Post'], what: ['composition'] },//11
+
         ]
       };
       return methods['methods'] || [];
@@ -352,17 +364,36 @@ export default defineComponent({
     // Get actions associated with the selected method
     getActionsForMethod(index) {
       const actions = [
-        [{ label: 'Submit', action: 'submit_template_list' }],//1
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_template_get' }],//2
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_template_post' }],//3
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_post' }],//1
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_put' }],//2
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_get' }],//3
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_getv_info' }],//4
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_getv_rev' }],//5
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_getv_vat' }],//6
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_getv_vbv' }],//7
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_del' }],//8
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_comp_example' }],//9
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_batch_ehrid' }],//10
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_batch_noehrid' }],//11
+
       ];
       return actions[index] || [];
     },
     getRadioParamsForMethod(index) {
       const radioParams = [
-        [],//1
-        [{ label: 'Output Format', selected: "Opt", options: ['Opt', 'Webtemplate'] }],//2
-        [],//3
+        [{ label: 'Input Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] },
+        { label: 'Check comp inserted against given', selected: "N", options: ['Y', 'N'] },],//1
+        [{ label: 'Input Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] }],//2
+        [{ label: 'Output Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] }],//3
+        [],//4
+        [],//5  
+        [],//6
+        [],//7
+        [],//8
+        [{ label: 'Output Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] }],//9
+        [{ label: 'Input Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] }],//10
+        [{ label: 'Input Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] }],//11
+
       ];
       return radioParams[index] || [];
     },
@@ -370,8 +401,7 @@ export default defineComponent({
     getParamsForMethod(index) {
       const params = [
         [//1
-        ],
-        [//2
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
           {
             label: "Template Name",
             value: "",
@@ -380,37 +410,119 @@ export default defineComponent({
             placeholder: "Select Template Name",
           }
         ],
-        [//3
-          // {
-          //   label: "Template File",
-          //   value: "",
-          //   type: "file",
-          //   placeholder: "Choose Template File",
-          // }
+        [//2
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          {
+            label: "Template Name",
+            value: "",
+            type: "select",
+            optionsKey: 'templateNames',
+            placeholder: "Select Template Name",
+          },
+          { label: 'Composition versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }
         ],
+        [//3
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" },
+          { label: 'Composition id/Composition versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710/afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }
+
+        ],
+        [//4
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" }
+        ],
+        [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" }],//5
+        [//6
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" }, { label: 'At time (optional)', value: '', type: 'text', placeholder: "2050-01-20T16:40:07.227+01:00" }],
+        [//7
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" },
+          { label: 'Composition versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
+        [//8
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
+        [//9
+          {
+            label: "Template Name",
+            value: "",
+            type: "select",
+            optionsKey: 'templateNames',
+            placeholder: "Select Template Name",
+          }],
+        [//10
+          { label: 'EHRid (optional)', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, {
+            label: "Template Name",
+            value: "",
+            type: "select",
+            optionsKey: 'templateNames',
+            placeholder: "Select Template Name",
+          }],
+        [//11
+          {
+            label: "Template Name",
+            value: "",
+            type: "select",
+            optionsKey: 'templateNames',
+            placeholder: "Select Template Name",
+          }],
+
+
       ];
-      if (index === 1 && params[1] && params[1][0]) {
-        params[1][0].value = '';
-      }
       return params[index] || [];
     },
 
     // Handle action button click
     async executeAction(action) {
       this.results = null
-      if (action == 'submit_template_list') //get template list
+      if (action == 'submit_comp_post') //post composition
       {
-        try {
-          this.templates = await this.fetchTemplateNames();
-          console.log('templates', this.templates);
-          this.results = JSON.stringify(this.templates, null, 2);
-          this.resultsOK = true;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        console.log(ehrid);
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
+          const tid = this.currentParams.find(p => p.label === 'Template Name');
+          if (!tid.value) {
+            this.results = 'Template Name is required';
+            return;
+          }
+          this.format = this.currentRadioParams.find(p => p.label === 'Input Format')?.selected || "FLAT";
+          if (!this.selectedFile) {
+            this.results = 'Please select a composition file'
+            return;
+          }
+          const check = this.currentRadioParams.find(p => p.label === 'Check comp inserted against given')?.selected || "N";
+          if (check == 'Y') {
+            this.check = true;
+          } else {
+            this.check = false;
+          }
+          const reader = new FileReader();
+          try {
+            if (this.format == 'XML') {
+              reader.onload = async () => {
+                const parser = new DOMParser();
+                const composition = parser.parseFromString(reader.result, "application/xml");
+                console.log('composition is', composition);
+                const compResults = await this.postcomposition(ehrid.value, tid.value, this.format, composition, this.check);
+                this.results = JSON.stringify(compResults, null, 2);
+              }
+            } else {
+              reader.onload = async () => {
+                const composition = JSON.parse(reader.result);
+                console.log('composition is', composition);
+                const compResults = await this.postcomposition(ehrid.value, tid.value, this.format, composition, this.check);
+                console.log('results', compResults);
+                this.results = JSON.stringify(compResults, null, 2);
+              }
+            }
+            reader.readAsText(this.selectedFile);
+
+          }
+          catch (error) {
+            console.error("Error uploading composition file:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'EHRid is required';
         }
-        catch (error) {
-          console.error("Error in executeAction:", error);
-          this.results = `Error: ${error.message}`;
-        }
-      } else if (action == 'clear_all') {
+      }
+      else if (action == 'clear_all') {
         this.currentParams.forEach(param => { param.value = ''; });
         this.results = null;
         this.resultsOK = false;
@@ -420,65 +532,42 @@ export default defineComponent({
           fileInput.value = null;
         }
 
-      } else if (action == 'submit_template_get') //get template by name
-      {
-        this.resultsOK = false;
-        const tid = this.currentParams.find(p => p.label === 'Template Name');
-        if (!tid.value) {
-          this.results = 'Template Name is required';
-          return;
-        }
-        console.log('tid is', tid?.value);
-        this.format = this.currentRadioParams.find(p => p.label === 'Output Format')?.selected || "Opt";
-        try {
-          const templateResults = await this.gettemplate(tid.value, this.format);
-          console.log('results', templateResults);
+      } else if (action == 'submit_comp_get') {
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (ehrid.value) {
+          const compid = this.currentParams.find(p => p.label === 'Composition id/Composition versioned id');
+          if (compid.value) {
+            this.format = this.currentRadioParams.find(p => p.label === 'Output Format')?.selected || "FLAT";
+            const compResults = await this.getcomposition(ehrid.value, compid.value, this.format);
+            console.log('results', compResults);
+            if (this.format == 'XML') {
+              this.resultsName = 'composition.xml';
+              this.results = this.formatXml(compResults);
+            } else {
+              this.resultsName = 'composition.json';
+              this.results = JSON.stringify(compResults, null, 2);
+            }
 
-          if (this.format.toLowerCase() == 'opt') {
-            this.resultsName = 'results.opt';
-            this.results = this.formatXml(templateResults);
           } else {
-            this.resultsName = 'results.json';
-            this.results = JSON.stringify(templateResults, null, 2);
+            this.results = 'Composition id is required';
           }
+        } else {
+          this.results = 'EHRid is required';
         }
-        catch (error) {
-          console.error("Error in executeAction:", error);
-          this.results = `Error: ${error.message}`;
-        }
+      }
 
-      }
-      else if (action == 'submit_template_post') //post template
-      {
-        console.log('inside submit_template_post')
-        this.resultsOK = false;
-        if (!this.selectedFile) {
-          this.results = 'Please select a Template file'
-          return;
-        }
-        try {
-          const reader = new FileReader();
-          reader.onload = async () => {
-            try {
-              const parser = new DOMParser();
-              const template = parser.parseFromString(reader.result, "application/xml");
-              console.log('template is', template);
-              const templateResults = await this.posttemplate(template);
-              console.log('results', templateResults);
-              this.results = JSON.stringify(templateResults, null, 2);
-            }
-            catch (error) {
-              console.error("Error uploading OPT file:", error);
-              this.results = `Error: ${error.message}`;
-            }
-          };
-          reader.readAsText(this.selectedFile);
-        }
-        catch (error2) {
-          console.error("Error in posttemplate:", error2);
-          this.results = `Error: ${error2.message}`;
-        }
-      }
+
+
+
+
+
+
+
+
+
+
+
+
       else {
         this.results = null;
         this.resultsOK = false;
@@ -515,50 +604,6 @@ export default defineComponent({
       localStorage.clear(); // Clear local storage
       sessionStorage.clear(); // Clear session storage
       this.$router.push("/login"); // Redirect to login page
-    },
-    //for template list and get
-    async fetchTemplateNames() {
-      try {
-        console.log('fetchTemplateNames called');
-        this.isLoadingTemplateNames = true;
-        this.templateNames = [];
-        const response = await axios.get('http://127.0.0.1:5000/template/templates',
-          { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 });
-        this.isLoadingTemplateNames = false;
-        if (response.status === 401) {
-          console.error("Unauthorized access. Please login again.");
-          this.logout();
-          return
-        }
-        if (response.status != 200) {
-          console.error("Error fetching templates list:", response);
-          return;
-        }
-        // Assuming the backend returns data in this structure
-        console.log(response)
-        console.log(response.data)
-        this.templates = response.data
-        console.log('this.templates', this.templates);
-        console.log(typeof this.templates);
-        this.templateNames = this.templates.template.map(template => template.template_id);
-        console.log('this.templateNames', this.templateNames);
-
-      } catch (error) {
-        console.error("Error fetching templates:", error);
-        if (error?.response?.status) {
-          if (error.response.status === 401) {
-            console.error("Unauthorized access. Please login again.");
-            this.logout();
-            return
-          }
-        }
-      }
-      finally {
-        this.isLoadingNames = false;
-      }
-
-      return this.templates;
     },
     //for ehr info modal
     async fetchEHRdata() {
@@ -641,6 +686,16 @@ export default defineComponent({
       finally {
         this.isLoadingTemplate = false;
       }
+      //       this.templateData = [{ 'template_id': 'template1', 'concept': 'template1', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template2', 'concept': 'template2', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template3', 'concept': 'template3', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template4', 'concept': 'template4', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template5', 'concept': 'template5', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template6', 'concept': 'template6', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template7', 'concept': 'template7', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template8', 'concept': 'template8', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template9', 'concept': 'template9', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' },
+      // { 'template_id': 'template10', 'concept': 'template10', 'archetype_id': 'openEHR-EHR-COMPOSITION.report.v1', 'created_timestamp': '2024-12-19T11:06:33.781Z' }];
       return this.templateData;
     },
     toggleTemplateInfoModal() {
@@ -766,7 +821,7 @@ export default defineComponent({
       const content = this.results;
       // --- Determine MIME type based on filename ---
       const fileExtension = this.resultsName.split('.').pop().toLowerCase();
-      const mimeType = fileExtension === 'opt' ? 'application/xml' : 'application/json';
+      const mimeType = fileExtension === 'xml' ? 'application/xml' : 'application/json';
       // --- ---
       const blob = new Blob([content], { type: mimeType });
       const url = URL.createObjectURL(blob);
@@ -781,24 +836,15 @@ export default defineComponent({
     },
 
 
-
-    async gettemplate(templateid, format) {
+    async fetchTemplateNames() {
       try {
-        console.log('gettemplate called');
-        this.isLoading = true;
-        this.resultsOK = false;
-        console.log('templateid is', templateid);
-        console.log('format is', format);
-        const response = await axios.get('http://127.0.0.1:5000/template/',
-          {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
-            params: {
-              templateid: templateid,
-              format: format
-            },
-            timeout: 2000000
-          });
-        this.isLoading = false;
+        console.log('fetchTemplateNames called');
+        this.isLoadingTemplateNames = true;
+        this.templateNames = [];
+        const response = await axios.get('http://127.0.0.1:5000/template/templates',
+          { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
+          { timeout: 2000000 });
+        this.isLoadingTemplateNames = false;
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -808,11 +854,17 @@ export default defineComponent({
           console.error("Error fetching templates list:", response);
           return;
         }
-        this.resultsOK = true;
-        return response.data.template;
+        // Assuming the backend returns data in this structure
+        console.log(response)
+        console.log(response.data)
+        this.templates = response.data
+        console.log('this.templates', this.templates);
+        console.log(typeof this.templates);
+        this.templateNames = this.templates.template.map(template => template.template_id);
+        console.log('this.templateNames', this.templateNames);
 
       } catch (error) {
-        console.error("Error fetching template", error);
+        console.error("Error fetching templates:", error);
         if (error?.response?.status) {
           if (error.response.status === 401) {
             console.error("Unauthorized access. Please login again.");
@@ -822,32 +874,55 @@ export default defineComponent({
         }
       }
       finally {
-        this.isLoading = false;
+        this.isLoadingNames = false;
       }
+
+      return this.templates;
     },
-    async posttemplate(template) {
-      console.log('inside posttemplate')
+
+
+
+
+
+
+
+
+
+
+    async postcomposition(ehrid, templateid, format, composition, check) {
+      console.log('inside postcomposition')
+      console.log('ehrid=', ehrid)
       console.log(localStorage.getItem("authToken"))
       this.isLoading = true;
       this.resultsOK = false;
-      const serializer = new XMLSerializer();
-      const templateString = serializer.serializeToString(template);
-      console.log('templateString=', templateString);
-      // await this.sleep(5000);
+      let compString;
+      if (format == 'XML') {
+        compString = new XMLSerializer().serializeToString(composition);
+        console.log('compString is', compString);
+      }
+      else {
+        compString = JSON.stringify(composition);
+        console.log('jsonString is', compString);
+      }
       try {
-        const response = await axios.post(`http://127.0.0.1:5000/template/`,
-          { "template": templateString },
+        const response = await axios.post(`http://127.0.0.1:5000/composition`,
+          { "composition": compString },
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
             },
+            params: {
+              ehrid: ehrid,
+              templateid: templateid,
+              format: format,
+              check: check
+            },
             timeout: 2000000,
           });
-        this.isLoading = false;
-        return response.data.template;
+        return response.data.composition;
       }
       catch (error) {
-        console.error("Error in posttemplate:", error);
+        console.error("Error in postcomposition:", error);
         if (error?.response?.status) {
           if (error.response.status === 401) {
             console.error("Unauthorized access. Please login again.");
@@ -857,7 +932,43 @@ export default defineComponent({
           if (402 <= error.response.status <= 500) {
             return error.response.data;
           }
-
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getcomposition(ehrid, compid, format) {
+      console.log('inside getcomposition')
+      this.isLoading = true;
+      this.resultsOK = false;
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/composition/${compid}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              ehrid: ehrid,
+              format: format
+            },
+            timeout: 2000000,
+          });
+        console.log('response is', response);
+        this.resultsOK = true;
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in getcomposition:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
           throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
         }
       } finally {
@@ -902,10 +1013,6 @@ export default defineComponent({
 
 
 
-
-
-
-
   },
 });
 </script>
@@ -929,6 +1036,23 @@ h1 {
   padding-top: 0px;
   /* Add some padding on top if needed */
 }
+
+/* .main-content {
+  align-items: center;
+  width: 100%;
+  padding: 40px;
+  padding-top: 0px;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0px;
+  margin-bottom: 100px;
+  margin-right: 30px;
+  margin-left: 220px;
+  position: relative;
+  z-index: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+} */
 
 .main-content {
   width: calc(100% - 290px);
@@ -1000,6 +1124,7 @@ h1 {
   box-sizing: border-box;
 }
 
+
 .parameters-title {
   width: 100%;
 }
@@ -1024,7 +1149,6 @@ h1 {
   background-color: #a5a5a5;
 }
 
-
 .parameter-form .form-group {
   margin-bottom: 30px;
   /* Adjust the spacing between form groups */
@@ -1040,6 +1164,7 @@ h1 {
   box-sizing: border-box;
   margin-top: 20px;
 }
+
 
 .results-section pre {
   font-size: 14px;
@@ -1069,22 +1194,10 @@ h1 {
   /* padding: 10px;
   border: 1px solid #ccc;
   margin-bottom: 10px; */
-  /* padding: 0;
-  margin: 0;
-  border: none; */
   width: 100%;
   overflow-x: hidden;
   overflow-y: visible;
 }
-
-
-
-/* .results-content {
-  display: inline-block;
-  min-width: 100%;
- 
-} */
-
 
 
 .results-content {
@@ -1108,6 +1221,7 @@ h1 {
   /* box-sizing: border-box; */
 }
 
+
 .no-method {
   display: flex;
   justify-content: left;
@@ -1124,6 +1238,7 @@ h1 {
 
 .method-title {
   background: #bad489;
+  /* */
   text-align: center;
 }
 
@@ -1169,6 +1284,14 @@ h1 {
   margin-bottom: 30px;
 }
 
+/* 
+.label-odd {
+  color: rgb(0, 0, 0);
+}
+
+.label-even {
+  color: rgb(212, 23, 23);
+} */
 
 .form-check-group {
   display: flex;
@@ -1179,7 +1302,6 @@ h1 {
   /* margin-left: 30%; */
   /* Ensures the container spans the full width */
 }
-
 
 .form-check {
   display: inline-flex;
@@ -1222,12 +1344,4 @@ h1 {
   margin-bottom: 10px;
   z-index: 1;
 }
-
-/* .results-section,
-.results-container,
-.results-content,
-.results-content>div,
-.results-content>pre {
-  border: 1px dashed red;
-} */
 </style>
