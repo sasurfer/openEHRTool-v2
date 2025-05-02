@@ -499,14 +499,14 @@ export default defineComponent({
                 const parser = new DOMParser();
                 const composition = parser.parseFromString(reader.result, "application/xml");
                 console.log('composition is', composition);
-                const compResults = await this.postcomposition(ehrid.value, tid.value, this.format, composition, this.check);
+                const compResults = await this.postcomposition(composition, ehrid.value, tid.value, this.format, this.check);
                 this.results = JSON.stringify(compResults, null, 2);
               }
             } else {
               reader.onload = async () => {
                 const composition = JSON.parse(reader.result);
                 console.log('composition is', composition);
-                const compResults = await this.postcomposition(ehrid.value, tid.value, this.format, composition, this.check);
+                const compResults = await this.postcomposition(composition, ehrid.value, tid.value, this.format, this.check);
                 console.log('results', compResults);
                 this.results = JSON.stringify(compResults, null, 2);
               }
@@ -889,7 +889,7 @@ export default defineComponent({
 
 
 
-    async postcomposition(ehrid, templateid, format, composition, check) {
+    async postcomposition(composition, ehrid, templateid, format, check) {
       console.log('inside postcomposition')
       console.log('ehrid=', ehrid)
       console.log(localStorage.getItem("authToken"))
