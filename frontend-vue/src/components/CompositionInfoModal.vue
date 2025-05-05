@@ -50,7 +50,7 @@ export default {
 .modal {
   position: fixed;
   top: 300px;
-  right: 40px;
+  right: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -62,7 +62,7 @@ export default {
   background-color: #5e5d5d;
   color: white;
   border-radius: 10px;
-  width: 600px;
+  width: 550px;
   max-width: 100%;
   height: 300px;
   max-height: 100%;

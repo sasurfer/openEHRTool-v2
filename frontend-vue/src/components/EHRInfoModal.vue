@@ -50,7 +50,7 @@ export default {
 .modal {
   position: fixed;
   top: 0;
-  right: 40px;
+  right: 50px;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -109,7 +109,7 @@
                     <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
                       :value="option" v-model="radioparam.selected" class="form-check-input" />
                     <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                      }}</label>
+                    }}</label>
                   </div>
                 </div>
 
@@ -953,7 +953,7 @@ h1 {
   position: fixed;
   /* Fix the method selection on the left */
   top: 0;
-  left: 60px;
+  left: 50px;
   width: 190px;
   /* You can adjust this width as needed */
   height: 100%;
