@@ -114,6 +114,116 @@ async def post_composition_ehrbase(
         return myresp
 
 
+async def put_composition_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    url_base_ecis: str,
+    ehrid: str,
+    templateid: str,
+    composition: str,
+    format: str,
+    ehrbase_version: str,
+    check: bool,
+    compositionvid: str,
+):
+    logger = get_logger(request)
+    logger.debug("inside put_composition_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        headers = {
+            "Authorization": auth,
+            "Prefer": "return=representation",
+            "If-Match": compositionvid,
+        }
+        compositionid = compositionvid.split("::")[0]
+        myurl = url_normalize(
+            url_base + "ehr/" + ehrid + "/composition/" + compositionid
+        )
+        if format == "xml":
+            headers["Content-Type"] = "application/xml"
+            headers["Accept"] = "application/xml"
+            params = {"format": "XML"}
+        elif format == "json":
+            headers["Content-Type"] = "application/json"
+            headers["Accept"] = "application/json"
+            if compareEhrbaseVersions(ehrbase_version, "2.5.0") > 0:
+                params = {"format": "JSON"}
+            else:
+                params = {"format": "RAW"}
+        elif format == "structured":
+            headers["Content-Type"] = "application/json"
+            headers["Accept"] = "application/json"
+            params = {"format": "STRUCTURED", "templateId": templateid, "ehrId": ehrid}
+            if compareEhrbaseVersions(ehrbase_version, "2.5.0") <= 0:
+                myurl = url_normalize(url_base_ecis + "composition/" + compositionid)
+        elif format == "flat":
+            headers["Content-Type"] = "application/json"
+            headers["Accept"] = "application/json"
+            headers["Prefer"] = "return=representation"
+            params = {"format": "FLAT", "templateId": templateid, "ehrId": ehrid}
+            if compareEhrbaseVersions(ehrbase_version, "2.5.0") <= 0:
+                myurl = url_normalize(url_base_ecis + "composition/" + compositionid)
+        else:
+            logger.error(f"Invalid enum value: {format}")
+            raise HTTPException(status_code=400, detail=f"Invalid enum value: {format}")
+        logger.debug(f"headers: {headers}")
+        logger.debug(f"params: {params}")
+        logger.debug(f"url: {myurl}")
+        response = await fetch_put_data(
+            client=client,
+            url=myurl,
+            headers=headers,
+            data=composition,
+            params=params,
+            timeout=20000,
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            compositionvnum = int(compositionvid.split("::")[2]) + 1
+            compositionvidnew = (
+                compositionvid.split("::")[0]
+                + "::"
+                + compositionvid.split("::")[1]
+                + "::"
+                + str(compositionvnum)
+            )
+            myresp["compositionvid"] = compositionvidnew
+            myresp["composition"] = {
+                "status": myresp["status"],
+                "compositionvid": myresp["compositionvid"],
+            }
+            if check:
+                respget = await get_composition_ehrbase(
+                    request,
+                    auth,
+                    url_base,
+                    url_base_ecis,
+                    compositionvidnew,
+                    ehrid,
+                    format,
+                    ehrbase_version,
+                )
+                if format != "xml":
+                    composition_get = json.dumps(respget["composition"])
+                else:
+                    composition_get = respget["composition"]
+                check_outcome = composition_check(composition, composition_get, format)
+                if check_outcome == None:
+                    myresp["composition"][
+                        "check"
+                    ] = "Successful. Retrieved and posted composition are the same"
+                else:
+                    myresp["composition"][
+                        "check"
+                    ] = "WARNING: Retrieved composition different from posted one"
+                    myresp["composition"]["checkinfo"] = check_outcome
+                pass
+        return myresp
+
+
 async def get_composition_ehrbase(
     request: Request,
     auth: str,

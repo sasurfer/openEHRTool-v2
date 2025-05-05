@@ -22,11 +22,14 @@ async def fetch_get_data(
         return response
     except httpx.HTTPStatusError as e:
         if 400 <= e.response.status_code < 500:
+            try:
+                error_details = e.response.json()
+            except ValueError:
+                error_details = e.response.text or "No content in response"
             raise HTTPException(
                 status_code=e.response.status_code,
-                detail=f"HTTP Error: {e.response.json()}",
+                detail=f"HTTP Error: {error_details}",
             )
-        else:
             raise HTTPException(status_code=500, detail=f"Error fetching data: {e}")
 
 
@@ -48,9 +51,13 @@ async def fetch_post_data(
         return response
     except httpx.HTTPStatusError as e:
         if 400 <= e.response.status_code < 500:
+            try:
+                error_details = e.response.json()
+            except ValueError:
+                error_details = e.response.text or "No content in response"
             raise HTTPException(
                 status_code=e.response.status_code,
-                detail=f"HTTP Error: {e.response.json()}",
+                detail=f"HTTP Error: {error_details}",
             )
         else:
             raise HTTPException(status_code=500, detail=f"Error posting data: {e}")
@@ -73,9 +80,13 @@ async def fetch_put_data(
         return response
     except httpx.HTTPStatusError as e:
         if 400 <= e.response.status_code < 500:
+            try:
+                error_details = e.response.json()
+            except ValueError:
+                error_details = e.response.text or "No content in response"
             raise HTTPException(
                 status_code=e.response.status_code,
-                detail=f"HTTP Error: {e.response.json()}",
+                detail=f"HTTP Error: {error_details}",
             )
         else:
             raise HTTPException(status_code=500, detail=f"Error putting data: {e}")
@@ -97,9 +108,13 @@ async def fetch_delete_data(
         return response
     except httpx.HTTPStatusError as e:
         if 400 <= e.response.status_code < 500:
+            try:
+                error_details = e.response.json()
+            except ValueError:
+                error_details = e.response.text or "No content in response"
             raise HTTPException(
                 status_code=e.response.status_code,
-                detail=f"HTTP Error: {e.response.json()}",
+                detail=f"HTTP Error: {error_details}",
             )
         else:
             raise HTTPException(status_code=500, detail=f"Error deleting data: {e}")

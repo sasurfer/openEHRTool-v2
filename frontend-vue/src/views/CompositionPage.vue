@@ -555,6 +555,63 @@ export default defineComponent({
           this.results = 'EHRid is required';
         }
       }
+      else if (action == 'submit_comp_put') //put composition
+      {
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        console.log(ehrid);
+        if (ehrid.value) {
+          console.log('ehrid is', ehrid.value);
+          const tid = this.currentParams.find(p => p.label === 'Template Name');
+          if (!tid.value) {
+            this.results = 'Template Name is required';
+            return;
+          }
+          const compid = this.currentParams.find(p => p.label === 'Composition versioned id');
+          if (!compid.value) {
+            this.results = 'Composition versioned id is required';
+            return;
+          }
+          this.format = this.currentRadioParams.find(p => p.label === 'Input Format')?.selected || "FLAT";
+          if (!this.selectedFile) {
+            this.results = 'Please select a composition file'
+            return;
+          }
+          const check = this.currentRadioParams.find(p => p.label === 'Check comp inserted against given')?.selected || "N";
+          if (check == 'Y') {
+            this.check = true;
+          } else {
+            this.check = false;
+          }
+          const reader = new FileReader();
+          try {
+            if (this.format == 'XML') {
+              reader.onload = async () => {
+                const parser = new DOMParser();
+                const composition = parser.parseFromString(reader.result, "application/xml");
+                console.log('composition is', composition);
+                const compResults = await this.putcomposition(composition, ehrid.value, tid.value, this.format, this.check, compid.value);
+                this.results = JSON.stringify(compResults, null, 2);
+              }
+            } else {
+              reader.onload = async () => {
+                const composition = JSON.parse(reader.result);
+                console.log('composition is', composition);
+                const compResults = await this.putcomposition(composition, ehrid.value, tid.value, this.format, this.check, compid.value);
+                console.log('results', compResults);
+                this.results = JSON.stringify(compResults, null, 2);
+              }
+            }
+            reader.readAsText(this.selectedFile);
+
+          }
+          catch (error) {
+            console.error("Error uploading composition file:", error);
+            this.results = `Error: ${error.message}`;
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
 
 
 
@@ -923,6 +980,54 @@ export default defineComponent({
       }
       catch (error) {
         console.error("Error in postcomposition:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async putcomposition(composition, ehrid, templateid, format, check, compid) {
+      console.log('inside putcomposition')
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      let compString;
+      if (format == 'XML') {
+        compString = new XMLSerializer().serializeToString(composition);
+        console.log('compString is', compString);
+      }
+      else {
+        compString = JSON.stringify(composition);
+        console.log('jsonString is', compString);
+      }
+      try {
+        const response = await axios.put(`http://127.0.0.1:5000/composition/${compid}`,
+          { "composition": compString },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              ehrid: ehrid,
+              templateid: templateid,
+              format: format,
+              check: check
+            },
+            timeout: 2000000,
+          });
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in putcomposition:", error);
         if (error?.response?.status) {
           if (error.response.status === 401) {
             console.error("Unauthorized access. Please login again.");
