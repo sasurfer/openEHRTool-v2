@@ -9,6 +9,7 @@ from app.backend_ehrbase.composition.composition import (
     get_composition_ehrbase,
     post_composition_ehrbase,
     put_composition_ehrbase,
+    get_compositionv_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
@@ -251,10 +252,130 @@ async def get_composition(
                 f"Get composition: composition compid={compositionid} ehrid={ehrid} and format={format} not retrieved",
             )
             return JSONResponse(
-                content={"template": e.__dict__}, status_code=e.status_code
+                content={"composition": e.__dict__}, status_code=e.status_code
             )
         else:
             print(f"An exception occurred during get_composition: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during get_composition"
+            )
+
+
+@router.get("/versioned/{compositionid}")
+async def get_compositionv(
+    request: Request,
+    compositionid: UUID,
+    ehrid: UUID = Query(None),
+    data: str = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside get_compositionv")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    option = 0
+    try:
+        compositionid = str(compositionid)
+        ehrid = str(ehrid)
+        url_base = request.app.state.url_base
+        if data == "":
+            option = 5
+        elif data == "versionedinfo":
+            option = 1
+        elif data == "versionedhistory":
+            option = 2
+        elif "::" in data:
+            try:
+                VersionedObjectId(data)
+                option = 4
+            except ValueError:
+                pass
+        else:
+            try:
+                datetime.fromisoformat(data)
+                option = 3
+            except ValueError:
+                pass
+        if option == 0:
+            raise HTTPException(status_code=400)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid data")
+
+    try:
+        response = await get_compositionv_ehrbase(
+            request,
+            auth,
+            url_base,
+            compositionid,
+            ehrid,
+            option,
+            data,
+        )
+        if option == 1:
+            insertlogline(
+                redis_client,
+                f"Get versioned composition: versioned composition info for compid={compositionid} ehrid={ehrid} retrieved successfully",
+            )
+        elif option == 2:
+            insertlogline(
+                redis_client,
+                f"Get versioned composition: versioned composition history for compid={compositionid} ehrid={ehrid} retrieved successfully",
+            )
+        elif option == 3:
+            insertlogline(
+                redis_client,
+                f"Get versioned composition: versioned composition for compid={compositionid} ehrid={ehrid} at time={data} retrieved successfully",
+            )
+        elif option == 4:
+            insertlogline(
+                redis_client,
+                f"Get versioned composition: versioned composition for compid={compositionid} ehrid={ehrid} and version={data} retrieved successfully",
+            )
+        elif option == 5:
+            insertlogline(
+                redis_client,
+                f"Get versioned composition: versioned composition for compid={compositionid} ehrid={ehrid} retrieved successfully",
+            )
+        return JSONResponse(
+            content={"composition": response["composition"]}, status_code=200
+        )
+    except Exception as e:
+        logger.error(f"An exception occurred during get_compositionv: {e}")
+        if 400 <= e.status_code < 500:
+            if option == 1:
+                insertlogline(
+                    redis_client,
+                    f"Get versioned composition: versioned composition info for compid={compositionid} ehrid={ehrid} not retrieved",
+                )
+            elif option == 2:
+                insertlogline(
+                    redis_client,
+                    f"Get versioned composition: versioned composition history for compid={compositionid} ehrid={ehrid} not retrieved",
+                )
+            elif option == 3:
+                insertlogline(
+                    redis_client,
+                    f"Get versioned composition: versioned composition for compid={compositionid} ehrid={ehrid} at time={data} not retrieved",
+                )
+            elif option == 4:
+                insertlogline(
+                    redis_client,
+                    f"Get versioned composition: versioned composition for compid={compositionid} ehrid={ehrid} and version={data} not retrieved",
+                )
+            elif option == 5:
+                insertlogline(
+                    redis_client,
+                    f"Get versioned composition: versioned composition for compid={compositionid} ehrid={ehrid} not retrieved",
+                )
+
+            return JSONResponse(
+                content={"composition": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during get_compositionv: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during get_compositionv"
             )

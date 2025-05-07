@@ -167,9 +167,6 @@ async def put_composition_ehrbase(
         else:
             logger.error(f"Invalid enum value: {format}")
             raise HTTPException(status_code=400, detail=f"Invalid enum value: {format}")
-        logger.debug(f"headers: {headers}")
-        logger.debug(f"params: {params}")
-        logger.debug(f"url: {myurl}")
         response = await fetch_put_data(
             client=client,
             url=myurl,
@@ -304,4 +301,85 @@ async def get_composition_ehrbase(
                 )
 
             myresp["composition"] = composition
+        return myresp
+
+
+async def get_compositionv_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    compositionid: str,
+    ehrid: str,
+    option: int,
+    data: str,
+):
+    logger = get_logger(request)
+    logger.debug("inside get_compositionv_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        headers = {
+            "Authorization": auth,
+            "Content-Type": "application/json",
+        }
+        params = {}
+        myurl = url_normalize(
+            url_base + "ehr/" + ehrid + "/versioned_composition/" + compositionid
+        )
+        if option == 1:  # info
+            pass
+        elif option == 2:  # revision history
+            myurl = url_normalize(
+                url_base
+                + "ehr/"
+                + ehrid
+                + "/versioned_composition/"
+                + compositionid
+                + "/revision_history"
+            )
+        elif option == 3:  # version at time
+            params["version_at_time"] = data
+            myurl = url_normalize(
+                url_base
+                + "ehr/"
+                + ehrid
+                + "/versioned_composition/"
+                + compositionid
+                + "/version"
+            )
+        elif option == 4:  # version by version
+            myurl = url_normalize(
+                url_base
+                + "ehr/"
+                + ehrid
+                + "/versioned_composition/"
+                + compositionid
+                + "/version/"
+                + data
+            )
+        elif option == 5:  # empty
+            myurl = url_normalize(
+                url_base
+                + "ehr/"
+                + ehrid
+                + "/versioned_composition/"
+                + compositionid
+                + "/version"
+            )
+        else:
+            logger.error(f"Invalid option value: {option}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid option value: {option}"
+            )
+        response = await fetch_get_data(
+            client=client,
+            url=myurl,
+            headers=headers,
+            params=params,
+            timeout=20000,
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["composition"] = json.loads(response.text)
         return myresp

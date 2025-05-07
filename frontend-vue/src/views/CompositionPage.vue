@@ -612,12 +612,86 @@ export default defineComponent({
           this.results = 'EHRid is required';
         }
       }
-
-
-
-
-
-
+      else if (action == 'submit_comp_getv_info') //get versioned composition info
+      {
+        console.log('inside submit_comp_getv_info')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (ehrid.value) {
+          const compid = this.currentParams.find(p => p.label === 'Composition id');
+          if (compid.value) {
+            const compResults = await this.getversionedcompositioninfo(ehrid.value, compid.value);
+            console.log('results', compResults);
+            this.results = JSON.stringify(compResults, null, 2);
+            this.resultsName = 'compversinfo.json';
+          } else {
+            this.results = 'Composition id is required';
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
+      else if (action == 'submit_comp_getv_rev') //get versioned composition revision history
+      {
+        console.log('inside submit_comp_getv_rev')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (ehrid.value) {
+          const compid = this.currentParams.find(p => p.label === 'Composition id');
+          if (compid.value) {
+            const compResults = await this.getversionedcompositionrevhisto(ehrid.value, compid.value);
+            console.log('results', compResults);
+            this.results = JSON.stringify(compResults, null, 2);
+            this.resultsName = 'compversrevhisto.json';
+          } else {
+            this.results = 'Composition id is required';
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
+      else if (action == 'submit_comp_getv_vat') //get versioned composition version at time
+      {
+        console.log('inside submit_comp_getv_vat')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (ehrid.value) {
+          const compid = this.currentParams.find(p => p.label === 'Composition id');
+          if (compid.value) {
+            const timestamp = this.currentParams.find(p => p.label === 'At time (optional)');
+            this.timestamp = timestamp?.value || "";
+            const compResults = await this.getversionedcompositionvat(ehrid.value, compid.value, this.timestamp);
+            console.log('results', compResults);
+            this.results = JSON.stringify(compResults, null, 2);
+            this.resultsName = 'versionedcomposition.json';
+          } else {
+            this.results = 'Composition id is required';
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
+      else if (action == 'submit_comp_getv_vbv') //get versioned composition version by version
+      {
+        console.log('inside submit_comp_getv_vbv')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (ehrid.value) {
+          const compid = this.currentParams.find(p => p.label === 'Composition id');
+          if (compid.value) {
+            const version = this.currentParams.find(p => p.label === 'Composition versioned id (optional)');
+            this.version = version?.value || "";
+            const compResults = await this.getversionedcompositionvat(ehrid.value, compid.value, this.version);
+            console.log('results', compResults);
+            this.results = JSON.stringify(compResults, null, 2);
+            this.resultsName = 'versionedcomposition.json';
+          } else {
+            this.results = 'Composition id is required';
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
 
 
 
@@ -945,7 +1019,6 @@ export default defineComponent({
 
 
 
-
     async postcomposition(composition, ehrid, templateid, format, check) {
       console.log('inside postcomposition')
       console.log('ehrid=', ehrid)
@@ -1080,6 +1153,163 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
+    async getversionedcompositioninfo(ehrid, compid) {
+      console.log('inside getversionedcompositioninfo')
+      this.isLoading = true;
+      this.resultsOK = false;
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/composition/versioned/${compid}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              ehrid: ehrid,
+              data: 'versionedinfo'
+            },
+            timeout: 2000000,
+          });
+        console.log('response is', response);
+        this.resultsOK = true;
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in getversionedcompositioninfo:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getversionedcompositionrevhisto(ehrid, compid) {
+      console.log('inside getversionedcompositionrevhisto')
+      this.isLoading = true;
+      this.resultsOK = false;
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/composition/versioned/${compid}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              ehrid: ehrid,
+              data: 'versionedhistory'
+            },
+            timeout: 2000000,
+          });
+        console.log('response is', response);
+        this.resultsOK = true;
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in getversionedcompositionrevhisto:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getversionedcompositionvat(ehrid, compid, timestamp) {
+      console.log('inside getversionedcompositionvat')
+      this.isLoading = true;
+      this.resultsOK = false;
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/composition/versioned/${compid}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              ehrid: ehrid,
+              data: timestamp
+            },
+            timeout: 2000000,
+          });
+        console.log('response is', response);
+        this.resultsOK = true;
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in getversionedcompositionvat:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getversionedcompositionvbv(ehrid, compid, version) {
+      console.log('inside getversionedcompositionvbv')
+      this.isLoading = true;
+      this.resultsOK = false;
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/composition/versioned/${compid}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              ehrid: ehrid,
+              data: version
+            },
+            timeout: 2000000,
+          });
+        console.log('response is', response);
+        this.resultsOK = true;
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in getversionedcompositionvbv:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+
+
+
+
+
+
+
+
     formatXml(xml) {
       let formatted = '';
       const reg = /(>)(<)(\/*)/g;
