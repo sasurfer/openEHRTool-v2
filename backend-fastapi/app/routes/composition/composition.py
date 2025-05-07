@@ -11,6 +11,7 @@ from app.backend_ehrbase.composition.composition import (
     put_composition_ehrbase,
     get_compositionv_ehrbase,
     delete_composition_ehrbase,
+    get_example_composition_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
@@ -194,6 +195,59 @@ async def put_composition(
         else:
             raise HTTPException(
                 status_code=500, detail="Server error during put_composition"
+            )
+
+
+@router.get("/example")
+async def get_example_composition(
+    request: Request,
+    templateid: str = Query(None),
+    format: str = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside get_composition")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        url_base = request.app.state.url_base
+        url_base_ecis = request.app.state.url_base_ecis
+        ehrbase_version = request.app.state.ehrbase_version
+        format = get_composition_enum_value(format)
+        response = await get_example_composition_ehrbase(
+            request,
+            auth,
+            url_base,
+            url_base_ecis,
+            templateid,
+            format,
+            ehrbase_version,
+        )
+        insertlogline(
+            redis_client,
+            f"Get example composition: example composition for templateid={templateid}   retrieved successfully in format={format}",
+        )
+        return JSONResponse(
+            content={"composition": response["composition"]}, status_code=200
+        )
+    except Exception as e:
+        logger.error(f"An exception occurred during get_example_composition: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Get example composition: example composition for templateid={templateid} and format={format} could not be retrieved",
+            )
+            return JSONResponse(
+                content={"composition": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during get_examaple_composition: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during get_example_composition"
             )
 
 

@@ -710,7 +710,32 @@ export default defineComponent({
         } else {
           this.results = 'EHRid is required';
         }
+      } else if (action == 'submit_comp_example') {
+        const tid = this.currentParams.find(p => p.label === 'Template Name');
+        if (!tid.value) {
+          this.results = 'Template Name is required';
+          return;
+        }
+        if (tid.value) {
+          this.format = this.currentRadioParams.find(p => p.label === 'Output Format')?.selected || "FLAT";
+          const compResults = await this.getexamplecomposition(tid.value, this.format);
+          console.log('results', compResults);
+          if (this.format == 'XML') {
+            this.resultsName = 'composition.xml';
+            this.results = this.formatXml(compResults);
+          } else {
+            this.resultsName = 'composition.json';
+            this.results = JSON.stringify(compResults, null, 2);
+          }
+
+        } else {
+          this.results = 'Template name is required';
+        }
       }
+
+
+
+
 
 
 
@@ -1355,7 +1380,43 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-
+    async getexamplecomposition(templateid, format) {
+      console.log('inside getexamplecomposition')
+      this.isLoading = true;
+      this.resultsOK = false;
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/composition/example`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              templateid: templateid,
+              format: format
+            },
+            timeout: 2000000,
+          });
+        console.log('response is', response);
+        this.resultsOK = true;
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in getexamplecomposition:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
 
 

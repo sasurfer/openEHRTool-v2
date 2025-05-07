@@ -419,3 +419,90 @@ async def delete_composition_ehrbase(
                 "action": f"Deleted composition {compositionvid} ehrid {ehrid}",
             }
         return myresp
+
+
+async def get_example_composition_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    url_base_ecis: str,
+    templateid: str,
+    format: str,
+    ehrbase_version: str,
+):
+    logger = get_logger(request)
+    logger.debug("inside get_example_composition_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        headers = {
+            "Authorization": auth,
+            "Prefer": "return=representation",
+        }
+        myurl = url_normalize(
+            url_base + "definition/template/adl1.4/" + templateid + "/example"
+        )
+        params = {}
+        if format == "xml":
+            headers["Accept"] = "application/xml"
+            headers["Content-Type"] = "application/xml"
+            params = {"format": "XML"}
+        elif format == "json":
+            headers["Accept"] = "application/json"
+            headers["Content-Type"] = "application/json"
+            params = {"format": "JSON"}
+        elif format == "structured":
+            headers["Accept"] = "application/json"
+            headers["Content-Type"] = "application/json"
+            params = {"format": "STRUCTURED"}
+            if compareEhrbaseVersions(ehrbase_version, "2.5.0") <= 0:
+                myurl = url_normalize(
+                    url_base_ecis + +"template/" + templateid + "/example"
+                )
+        elif format == "flat":
+            headers["Accept"] = "application/json"
+            headers["Content-Type"] = "application/json"
+            params = {"format": "FLAT"}
+            if compareEhrbaseVersions(ehrbase_version, "2.5.0") <= 0:
+                myurl = url_normalize(
+                    url_base_ecis + "template/" + templateid + "/example"
+                )
+        else:
+            logger.error(f"Invalid enum value: {format}")
+            raise HTTPException(status_code=400, detail=f"Invalid enum value: {format}")
+        response = await fetch_get_data(
+            client=client,
+            url=myurl,
+            headers=headers,
+            params=params,
+            timeout=20000,
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            composition = ""
+            if format == "xml":
+                root = etree.fromstring(response.text)
+                composition = etree.tostring(
+                    root, encoding="unicode", method="xml", pretty_print=True
+                )
+            elif format == "json":
+                composition = json.loads(response.text)
+            elif format == "structured":
+                if compareEhrbaseVersions(ehrbase_version, "2.5.0") > 0:
+                    composition = json.loads(response.text)
+                else:
+                    composition = json.loads(response.text)["composition"]
+            elif format == "flat":
+                if compareEhrbaseVersions(ehrbase_version, "2.5.0") > 0:
+                    composition = json.loads(response.text)
+                else:
+                    composition = json.loads(response.text)["composition"]
+            else:
+                logger.error(f"Invalid enum value: {format}")
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid enum value: {format}"
+                )
+
+            myresp["composition"] = composition
+        return myresp
