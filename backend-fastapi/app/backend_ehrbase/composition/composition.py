@@ -383,3 +383,39 @@ async def get_compositionv_ehrbase(
             myresp["status"] = "success"
             myresp["composition"] = json.loads(response.text)
         return myresp
+
+
+async def delete_composition_ehrbase(
+    request: Request,
+    auth: str,
+    url_base: str,
+    compositionvid: str,
+    ehrid: str,
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_composition_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        headers = {
+            "Authorization": auth,
+        }
+        myurl = url_normalize(
+            url_base + "ehr/" + ehrid + "/composition/" + compositionvid
+        )
+        params = {}
+        response = await fetch_delete_data(
+            client=client,
+            url=myurl,
+            headers=headers,
+            params=params,
+            timeout=20000,
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["composition"] = {
+                "status": myresp["status"],
+                "action": f"Deleted composition {compositionvid} ehrid {ehrid}",
+            }
+        return myresp

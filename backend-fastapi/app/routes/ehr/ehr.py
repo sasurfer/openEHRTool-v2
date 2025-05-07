@@ -59,7 +59,10 @@ async def get_ehr_by_ehrid(
     except Exception as e:
         logger.error(f"An exception occurred during get_ehr_by_ehrid: {e}")
         if 400 <= e.status_code < 500:
-            insertlogline(redis_client, "Get EHR by ehrid: ehr " + ehrid + " not found")
+            insertlogline(
+                redis_client,
+                "Get EHR by ehrid: ehr " + ehrid + " could not be retrieved",
+            )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
             print(f"An exception occurred during get_ehr_by_ehrid: {e}")
@@ -99,7 +102,7 @@ async def get_ehr_by_sid_sns(
         if 400 <= e.status_code < 500:
             insertlogline(
                 redis_client,
-                f"Get EHR by subjectid={subjectid} and subjectnamespace={subjectnamespace}: ehr not found",
+                f"Get EHR by subjectid={subjectid} and subjectnamespace={subjectnamespace}: ehr could not be retrieved",
             )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
@@ -153,7 +156,9 @@ async def post_ehr_by_ehrstatus(
     except Exception as e:
         logger.error(f"An exception occurred during post_ehr_by_ehrstatus: {e}")
         if 400 <= e.status_code < 500:
-            insertlogline(redis_client, "Post EHR by ehrstatus: not successful")
+            insertlogline(
+                redis_client, "Post EHR by ehrstatus: EHRStatus could not be inserted"
+            )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
             print(f"An exception occurred during post_ehr_by_ehrstatus: {e}")
@@ -242,7 +247,7 @@ async def get_ehrstatus(
                     redis_client,
                     "Get EHR ehrstatus: ehrstatus for ehrid="
                     + ehrid
-                    + " not successful",
+                    + " could not be retrieved",
                 )
             elif option == 2:
                 insertlogline(
@@ -251,7 +256,7 @@ async def get_ehrstatus(
                     + ehrid
                     + " and date="
                     + data
-                    + " not successful",
+                    + " could not be retrieved",
                 )
             elif option == 3:
                 insertlogline(
@@ -260,12 +265,12 @@ async def get_ehrstatus(
                     + ehrid
                     + " and versionedId="
                     + data
-                    + " not successful",
+                    + " could not be retrieved",
                 )
             else:
                 insertlogline(
                     redis_client,
-                    "Get EHR ehrstatus: not successful",
+                    "Get EHR ehrstatus: It could not be retrieved",
                 )
 
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
@@ -323,7 +328,9 @@ async def put_ehrstatus(
     except Exception as e:
         logger.error(f"An exception occurred during put_ehrstatus: {e}")
         if 400 <= e.status_code < 500:
-            insertlogline(redis_client, "Put EHR ehrstatus: not successful")
+            insertlogline(
+                redis_client, "Put EHR ehrstatus: EHRStatus could not be updated"
+            )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
             print(f"An exception occurred during put_ehrstatus: {e}")
@@ -363,7 +370,7 @@ async def post_ehr_by_ehrid_without(
         if 400 <= e.status_code < 500:
             insertlogline(
                 redis_client,
-                "Post EHR by ehrid without ehrid: ehr " + ehrid + " not successful",
+                "Post EHR by ehrid without ehrid: ehr could not be created",
             )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
@@ -403,7 +410,8 @@ async def post_ehr_by_ehrid_with(
         logger.error(f"An exception occurred during post_ehr_by_ehrid_with: {e}")
         if 400 <= e.status_code < 500:
             insertlogline(
-                redis_client, "Post EHR by ehrid: ehr " + ehrid + " not successful"
+                redis_client,
+                "Post EHR by ehrid: ehr " + ehrid + " could not be created",
             )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
@@ -456,7 +464,7 @@ async def post_ehr_by_sid_sns_with(
         if 400 <= e.status_code < 500:
             insertlogline(
                 redis_client,
-                f"Post EHR by subjectid and subjectnamespace: subjectid={subjectid} and subjectnamespace={subjectnamespace} not successful",
+                f"Post EHR by subjectid and subjectnamespace: EHR with ehrid={ehrid} subjectid={subjectid} and subjectnamespace={subjectnamespace} could not created",
             )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
@@ -508,7 +516,7 @@ async def post_ehr_by_sid_sns_without(
         if e.status_code == 404:
             insertlogline(
                 redis_client,
-                f"Post EHR by subjectid and subjectnamespace: subjectid={subjectid} and subjectnamespace={subjectnamespace} not successful",
+                f"Post EHR by subjectid and subjectnamespace: EHR with subjectid={subjectid} and subjectnamespace={subjectnamespace} could not be created",
             )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=404)
         else:
@@ -584,7 +592,7 @@ async def get_ehrstatus_versioned(
         elif option == 3:
             insertlogline(
                 redis_client,
-                "Get EHR ehrstatus versioned: ehrstatus forehrid="
+                "Get EHR ehrstatus versioned: ehrstatus for ehrid="
                 + ehrid
                 + " and date="
                 + data
@@ -605,7 +613,43 @@ async def get_ehrstatus_versioned(
     except Exception as e:
         logger.error(f"An exception occurred during get_ehrstatus_versioned: {e}")
         if 400 <= e.status_code < 500:
-            insertlogline(redis_client, "Get EHR ehrstatus versioned: not successful")
+            if option == 1:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus versioned: info for ehrid="
+                    + ehrid
+                    + " could not be retrieved",
+                )
+            elif option == 2:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus versioned: history for ehrid="
+                    + ehrid
+                    + " could not be retrieved",
+                )
+            elif option == 3:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus versioned: ehrstatus for ehrid="
+                    + ehrid
+                    + " and date="
+                    + data
+                    + " could not be retrieved",
+                )
+            elif option == 4:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus versioned: ehrstatus for ehrid="
+                    + ehrid
+                    + " and versionedId="
+                    + data
+                    + " could not be retrieved",
+                )
+            else:
+                insertlogline(
+                    redis_client,
+                    "Get EHR ehrstatus versioned: It could not be retrieved",
+                )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
             print(f"An exception occurred during get_ehrstatus_versioned: {e}")
@@ -651,7 +695,12 @@ async def post_directory(
     except Exception as e:
         logger.error(f"An exception occurred during post_directory: {e}")
         if 400 <= e.status_code < 500:
-            insertlogline(redis_client, "Post EHR directory folder: not successful")
+            insertlogline(
+                redis_client,
+                "Post EHR directory folder: Directory folder for ehr "
+                + ehrid
+                + " could not be inserted",
+            )
             return JSONResponse(
                 content={"folder": e.__dict__}, status_code=e.status_code
             )
@@ -705,9 +754,9 @@ async def put_directory(
         if 400 <= e.status_code < 500:
             insertlogline(
                 redis_client,
-                "Put EHR directory folder: Directory folder update for ehr"
+                "Put EHR directory folder: Directory folder for ehr"
                 + ehrid
-                + " not successful",
+                + " could not be updated",
             )
             return JSONResponse(
                 content={"folder": e.__dict__}, status_code=e.status_code
@@ -773,14 +822,14 @@ async def get_directory(
         if option == 1:
             insertlogline(
                 redis_client,
-                "Get EHR directory: directory for ehrid="
+                "Get EHR directory: Directory folder for ehrid="
                 + ehrid
                 + " retrieved successfully",
             )
         elif option == 2:
             insertlogline(
                 redis_client,
-                "Get EHR directory: directory for ehrid="
+                "Get EHR directory: Directory folder for ehrid="
                 + ehrid
                 + " and date="
                 + data
@@ -789,7 +838,7 @@ async def get_directory(
         else:
             insertlogline(
                 redis_client,
-                "Get EHR directory: directory for ehrid="
+                "Get EHR directory: Directory folder for ehrid="
                 + ehrid
                 + " and versionedId="
                 + data
@@ -804,20 +853,24 @@ async def get_directory(
         if 400 <= e.status_code < 500:
             if option == 1:
                 insertlogline(
-                    redis_client, f"Get EHR directory: not successful for ehr {ehrid}"
+                    redis_client,
+                    f"Get EHR directory: Directory folder for ehr {ehrid} could not be retrieved",
                 )
             elif option == 2:
                 insertlogline(
                     redis_client,
-                    f"Get EHR directory: not successful for ehr {ehrid} and date {data}",
+                    f"Get EHR directory: Directory folder for ehr {ehrid} and date {data} could not be retrieved",
                 )
             elif option == 3:
                 insertlogline(
                     redis_client,
-                    f"Get EHR directory: not successful for ehr {ehrid} and versionedId {data}",
+                    f"Get EHR directory: Directory folder for ehr {ehrid} and versionedId {data} could not be retrieved",
                 )
             else:
-                insertlogline(redis_client, "Get EHR directory: not successful")
+                insertlogline(
+                    redis_client,
+                    "Get EHR directory: Directory folder could not be retrieved",
+                )
             return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
         else:
             print(f"An exception occurred during get_directory: {e}")
@@ -851,7 +904,7 @@ async def delete_directory(
         )
         insertlogline(
             redis_client,
-            "Delete EHR directory: directory for ehrid="
+            "Delete EHR directory: Directory folderfor ehrid="
             + ehrid
             + " versionededId="
             + str(directoryversionedId)
@@ -864,7 +917,7 @@ async def delete_directory(
         if 400 <= e.status_code < 500:
             insertlogline(
                 redis_client,
-                f"Delete EHR directory: not successful for ehr {ehrid} versionedId {directoryversionedId}",
+                f"Delete EHR directory: Directory folder for ehr {ehrid} versionededId {directoryversionedId} could not be deleted",
             )
             return JSONResponse(
                 content={"folder": e.__dict__}, status_code=e.status_code

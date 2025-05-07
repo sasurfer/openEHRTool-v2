@@ -436,7 +436,7 @@ export default defineComponent({
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" },
           { label: 'Composition versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
         [//8
-          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition versioned id (optional)', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
         [//9
           {
             label: "Template Name",
@@ -692,7 +692,25 @@ export default defineComponent({
           this.results = 'EHRid is required';
         }
       }
-
+      else if (action == 'submit_comp_del') //delete composition
+      {
+        console.log('inside submit_comp_del')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (ehrid.value) {
+          const compvid = this.currentParams.find(p => p.label === 'Composition versioned id');
+          if (compvid.value) {
+            const compResults = await this.deletecomposition(ehrid.value, compvid.value);
+            console.log('results', compResults);
+            this.results = JSON.stringify(compResults, null, 2);
+            this.resultsName = 'results.json';
+          } else {
+            this.results = 'Composition versioned id is required';
+          }
+        } else {
+          this.results = 'EHRid is required';
+        }
+      }
 
 
 
@@ -1301,7 +1319,42 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-
+    async deletecomposition(ehrid, compvid) {
+      console.log('inside deletecomposition')
+      this.isLoading = true;
+      this.resultsOK = false;
+      try {
+        const response = await axios.delete(`http://127.0.0.1:5000/composition/${compvid}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              ehrid: ehrid,
+            },
+            timeout: 2000000,
+          });
+        console.log('response is', response);
+        this.resultsOK = true;
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in deletecomposition:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
 
 
