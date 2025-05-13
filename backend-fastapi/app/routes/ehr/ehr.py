@@ -774,7 +774,7 @@ async def get_directory(
     ehrid: UUID,
     data: Optional[str] = Query(None),
     path: Optional[str] = Query(None),
-    format: str = Query(None),
+    format: str = Query(...),
     redis_client: redis.StrictRedis = Depends(get_redis_client),
     token: str = Depends(get_token_from_header),
 ):
@@ -883,7 +883,7 @@ async def get_directory(
 async def delete_directory(
     request: Request,
     ehrid: UUID,
-    directoryversionedId: VersionedObjectId = Query(None),
+    directoryversionedId: VersionedObjectId = Query(...),
     redis_client: redis.StrictRedis = Depends(get_redis_client),
     token: str = Depends(get_token_from_header),
 ):

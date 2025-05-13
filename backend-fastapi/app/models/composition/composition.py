@@ -13,6 +13,10 @@ class CompositionPost(CompositionRequest):
     pass
 
 
+class CompositionPostBatch(BaseModel):
+    compositions: list[str]
+
+
 def get_composition_enum_value(value: str) -> formatEnum:
     for item in formatEnum:
         if item.value.lower() == value.lower():

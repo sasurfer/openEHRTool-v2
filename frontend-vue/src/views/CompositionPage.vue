@@ -113,8 +113,14 @@
 
                 <div v-if="currentFile" class="file-input">
                   <label>{{ labelFile }}</label>
-                  <input type="file" ref="fileInput" @change="handleFileUpload" />
+                  <div v-if="multipleFiles">
+                    <input type="file" ref="fileInput" @change="handleMultipleFileUpload" multiple />
+                  </div>
+                  <div v-else>
+                    <input type="file" ref="fileInput" @change="handleFileUpload" />
+                  </div>
                 </div>
+
 
                 <div class="action-group">
                   <div v-for="(action, index) in methodActions" :key="index" class="action-button">
@@ -227,6 +233,7 @@ export default defineComponent({
       currentParams: [],
       currentRadioParams: [],
       currentFile: false,
+      multipleFiles: false,
       labelFile: null,
       results: null,
       isLoadingEHR: false,
@@ -305,17 +312,17 @@ export default defineComponent({
     },
     getNeedFile(index) {
       const needFile = [
-        { file: true, label: 'Choose Composition File' },
-        { file: true, label: 'Choose Composition File' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: true, label: 'Choose Composition Files' },
-        { file: true, label: 'Choose Composition Files' }
+        { file: true, label: 'Choose Composition File', multiple: false },
+        { file: true, label: 'Choose Composition File', multiple: false },
+        { file: false, label: '', multiple: false },
+        { file: false, label: '', multiple: false },
+        { file: false, label: '', multiple: false },
+        { file: false, label: '', multiple: false },
+        { file: false, label: '', multiple: false },
+        { file: false, label: '', multiple: false },
+        { file: false, label: '', multiple: false },
+        { file: true, label: 'Choose Composition Files', multiple: true },
+        { file: true, label: 'Choose Composition Files', multiple: true },
       ];
       return needFile[index] || { file: false, label: '' };
     },
@@ -334,8 +341,7 @@ export default defineComponent({
       this.needFile = this.getNeedFile(index2);
       this.currentFile = this.needFile.file;
       this.labelFile = this.needFile.label;
-      console.log('currentfile', this.currentFile);
-      console.log('labelFile', this.labelFile);
+      this.multipleFiles = this.needFile.multiple;
       this.results = null; // Reset results
       if (index2 < 2 || index2 > 7) {
         this.fetchTemplateNames();
@@ -353,7 +359,7 @@ export default defineComponent({
           { label: 'Retrieve versioned Composition by version', type: ['Get'], what: ['composition'] },//7                         
           { label: 'Delete Composition', type: ['Del'], what: ['composition'] },//8
           { label: 'Retrieve Example Composition', type: ['Get'], what: ['composition', 'template'] },//9
-          { label: 'Batch Insert Compositions fixed EHRid', type: ['Post'], what: ['composition'] },//10
+          { label: 'Batch Insert Compositions same EHRid', type: ['Post'], what: ['composition'] },//10
           { label: 'Batch Insert Compositions different EHRid', type: ['Post'], what: ['composition'] },//11
 
         ]
@@ -391,8 +397,13 @@ export default defineComponent({
         [],//7
         [],//8
         [{ label: 'Output Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] }],//9
-        [{ label: 'Input Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] }],//10
-        [{ label: 'Input Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] }],//11
+        [{ label: 'Input Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] },
+        {
+          label: 'Check comp inserted against given', selected: "N", options: ['Y', 'N']
+        }],//10
+        [{ label: 'Input Format', selected: "FLAT", options: ['FLAT', 'JSON', 'STRUCTURED', 'XML'] },
+        { label: 'Check comp inserted against given', selected: "N", options: ['Y', 'N'] },
+        { label: "Create EHRs on the fly", selected: "Y", options: ['Y', 'N'] }]//11
 
       ];
       return radioParams[index] || [];
@@ -487,11 +498,7 @@ export default defineComponent({
             return;
           }
           const check = this.currentRadioParams.find(p => p.label === 'Check comp inserted against given')?.selected || "N";
-          if (check == 'Y') {
-            this.check = true;
-          } else {
-            this.check = false;
-          }
+          this.check = check === 'Y';
           const reader = new FileReader();
           try {
             if (this.format == 'XML') {
@@ -731,7 +738,111 @@ export default defineComponent({
         } else {
           this.results = 'Template name is required';
         }
+      } else if (action == 'submit_batch_ehrid') {
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid (optional)');
+        const tid = this.currentParams.find(p => p.label === 'Template Name');
+        if (!tid.value) {
+          this.results = 'Template Name is required';
+          return;
+        }
+        this.format = this.currentRadioParams.find(p => p.label === 'Input Format')?.selected || "FLAT";
+        if (!this.selectedFile || this.selectedFile.length === 0) {
+          this.results = 'Please select at least one composition file';
+          return;
+        }
+        const check = this.currentRadioParams.find(p => p.label === 'Check comp inserted against given')?.selected || "N";
+        this.check = check === 'Y';
+        this.onthefly = true;
+        try {
+          const fileReadPromises = this.selectedFile.map(file => {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                try {
+                  let parsed;
+                  if (this.format === 'XML') {
+                    const parser = new DOMParser();
+                    parsed = parser.parseFromString(reader.result, "application/xml");
+                  } else {
+                    parsed = JSON.parse(reader.result);
+                  }
+                  resolve({ filename: file.name, content: parsed });
+                } catch (parseError) {
+                  reject(`Error parsing ${file.name}: ${parseError.message}`);
+                }
+              };
+              reader.onerror = () => reject(`Error reading ${file.name}`);
+              reader.readAsText(file);
+            });
+          });
+
+          const parsedFiles = await Promise.all(fileReadPromises); // Wait for all to finish
+
+          const compositions = parsedFiles.map(p => p.content);
+
+          // Step 2: Single postcomposition call
+          const compResults = await this.postbatchcompositionsameehrid(compositions, ehrid.value, tid.value, this.format, this.check, this.onthefly);
+          this.results = JSON.stringify(compResults, null, 2);
+
+        } catch (error) {
+          console.error("Error processing files:", error);
+          this.results = `Error: ${error}`;
+        }
+      } else if (action == 'submit_batch_noehrid') {
+        // Batch insert compositions with different EHRids
+        const tid = this.currentParams.find(p => p.label === 'Template Name');
+        if (!tid.value) {
+          this.results = 'Template Name is required';
+          return;
+        }
+        this.format = this.currentRadioParams.find(p => p.label === 'Input Format')?.selected || "FLAT";
+        if (!this.selectedFile || this.selectedFile.length === 0) {
+          this.results = 'Please select at least one composition file';
+          return;
+        }
+        const check = this.currentRadioParams.find(p => p.label === 'Check comp inserted against given')?.selected || "N";
+        this.check = check === 'Y';
+        const onthefly = this.currentRadioParams.find(p => p.label === 'Create EHRs on the fly')?.selected || "Y";
+        console.log('onthefly', onthefly);
+        this.onthefly = onthefly === 'Y';
+        console.log('onthefly', this.onthefly);
+        try {
+          const fileReadPromises = this.selectedFile.map(file => {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                try {
+                  let parsed;
+                  if (this.format === 'XML') {
+                    const parser = new DOMParser();
+                    parsed = parser.parseFromString(reader.result, "application/xml");
+                  } else {
+                    parsed = JSON.parse(reader.result);
+                  }
+                  resolve({ filename: file.name, content: parsed });
+                } catch (parseError) {
+                  reject(`Error parsing ${file.name}: ${parseError.message}`);
+                }
+              };
+              reader.onerror = () => reject(`Error reading ${file.name}`);
+              reader.readAsText(file);
+            });
+          });
+
+          const parsedFiles = await Promise.all(fileReadPromises); // Wait for all to finish
+
+          const compositions = parsedFiles.map(p => p.content);
+
+          // Step 2: Single postcomposition call
+          const compResults = await this.postbatchcompositiondifferentehrid(compositions, tid.value, this.format, this.check, this.onthefly);
+          this.results = JSON.stringify(compResults, null, 2);
+
+        } catch (error) {
+          console.error("Error processing files:", error);
+          this.results = `Error: ${error}`;
+        }
       }
+
 
 
 
@@ -761,6 +872,12 @@ export default defineComponent({
       const file = event.target.files[0];
       this.selectedFile = file;
       console.log('File selected:', file);
+    },
+    handleMultipleFileUpload(event) {
+      this.selectedFile = Array.from(event.target.files);
+      this.selectedFile.forEach(file => {
+        console.log('File selected:', file);
+      });
     },
 
     //for user info modal
@@ -1417,6 +1534,114 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
+    async postbatchcompositionsameehrid(compositions, ehrid, templateid, format, check, onthefly) {
+      console.log('inside postbatchcompositionsameehrid')
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      let compStrings = compositions.map(composition => {
+        if (format === 'XML') {
+          return new XMLSerializer().serializeToString(composition);
+        } else {
+          return JSON.stringify(composition);
+        }
+      });
+      try {
+        const params = {};
+        if (ehrid && ehrid.trim() !== "") {
+          params.ehrid = ehrid; // Only add if it's a valid UUID string
+        }
+        params.templateid = templateid;
+        params.format = format;
+        params.check = check;
+        params.method = 'sameehrid';
+        params.onthefly = onthefly;
+        console.log('params are', params);
+        const response = await axios.post(`http://127.0.0.1:5000/composition/batch`,
+          { "compositions": compStrings },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: params,
+            timeout: 2000000,
+          });
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in postbatchcompositionsameehrid:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async postbatchcompositiondifferentehrid(compositions, templateid, format, check, onthefly) {
+      console.log('inside postbatchcompositiondifferentehrid')
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      let compStrings = compositions.map(composition => {
+        if (format === 'XML') {
+          return new XMLSerializer().serializeToString(composition);
+        } else {
+          return JSON.stringify(composition);
+        }
+      });
+      try {
+        const params = {};
+        params.templateid = templateid;
+        params.format = format;
+        params.check = check;
+        params.method = 'differentehrid';
+        params.onthefly = onthefly;
+        console.log('params are', params);
+        const response = await axios.post(`http://127.0.0.1:5000/composition/batch`,
+          { "compositions": compStrings },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: params,
+            timeout: 2000000,
+          });
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in postbatchcompositiondifferentehrid:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+
+
+
+
+
+
+
+
 
 
 

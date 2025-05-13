@@ -12,6 +12,7 @@ from app.backend_ehrbase.composition.composition import (
     get_compositionv_ehrbase,
     delete_composition_ehrbase,
     get_example_composition_ehrbase,
+    post_batch_composition_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
@@ -20,6 +21,7 @@ import json
 from app.models.composition.composition import (
     get_composition_enum_value,
     CompositionPost,
+    CompositionPostBatch,
 )
 from app.models import VersionedObjectId
 from datetime import datetime
@@ -488,4 +490,116 @@ async def delete_composition(
             print(f"An exception occurred during delete_composition: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during deleted_composition"
+            )
+
+
+@router.post("/batch")
+async def post_batch_composition(
+    request: Request,
+    data: CompositionPostBatch,
+    ehrid: Optional[str] = Query(None),
+    templateid: str = Query(...),
+    format: str = Query(...),
+    check: bool = Query(...),
+    method: str = Query(...),
+    onthefly: bool = Query(...),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside post_batch_composition")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    compositions = data.compositions
+    logger.debug(f"#composition: {len(compositions)}")
+    format = get_composition_enum_value(format)
+    # check all compositions
+    if format == "xml":
+        for i, composition in enumerate(compositions):
+            try:
+                xml_bytes = composition.encode("utf-8")
+                root = etree.fromstring(xml_bytes)
+            except Exception as e:
+                logger.error(f"unable to read composition {i}: {e}")
+                raise HTTPException(
+                    status_code=400, detail=f"Unable to read composition {i}"
+                )
+    else:
+        for i, composition in enumerate(compositions):
+            try:
+                compositionjson = json.loads(composition)
+            except Exception as e:
+                logger.error(f"unable to read composition {i}: {e}")
+                raise HTTPException(
+                    status_code=400, detail="Unable to read composition {i}"
+                )
+    if ehrid is not None:
+        try:
+            ehrid = str(ehrid)
+            UUID(ehrid)
+        except Exception as e:
+            logger.error(f"Invalid ehrid: {ehrid}")
+            raise HTTPException(status_code=400, detail="Invalid ehrid")
+
+    try:
+        url_base = request.app.state.url_base
+        url_base_ecis = request.app.state.url_base_ecis
+        ehrbase_version = request.app.state.ehrbase_version
+        response = await post_batch_composition_ehrbase(
+            request,
+            auth,
+            url_base,
+            url_base_ecis,
+            ehrid,
+            templateid,
+            compositions,
+            format,
+            ehrbase_version,
+            check,
+            method,
+            onthefly,
+            redis_client,
+        )
+        if method == "sameehrid":
+            ehrid = response["ehrid"]
+            compositionids = response["compositionids"]
+            insertlogline(
+                redis_client,
+                f"Post batch composition same ehrid: compositions= {compositionids},for templateid={templateid} and ehrid={ehrid}, posted successfully",
+            )
+
+            # update redis composition list
+            for compositionid in compositionids:
+                new_element = compositionid + " # " + ehrid
+                redis_client.rpush("key_compositions", new_element)
+        else:
+            ehrids = response["ehrids"]
+            compositionids = response["compositionids"]
+            insertlogline(
+                redis_client,
+                f"Post batch composition different ehrid: compositions= {compositionids},for templateid={templateid} and ehrids={ehrids}, posted successfully",
+            )
+            # update redis composition list
+            for compositionid, ehrid in zip(compositionids, ehrids):
+                new_element = compositionid + " # " + ehrid
+                redis_client.rpush("key_compositions", new_element)
+        return JSONResponse(
+            content={"composition": response["composition"]}, status_code=200
+        )
+    except Exception as e:
+        logger.error(f"An exception occurred during post_batch_composition: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Post batch composition: some composition, for templateid={templateid} and ehrid={ehrid}, could not be inserted successfully",
+            )
+            return JSONResponse(
+                content={"composition": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during post_batch_composition: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during post_batch_composition"
             )

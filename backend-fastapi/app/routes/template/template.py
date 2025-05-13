@@ -59,8 +59,8 @@ async def get_templates(
 @router.get("/")
 async def get_template(
     request: Request,
-    templateid: str = Query(None),
-    format: str = Query(None),
+    templateid: str = Query(...),
+    format: str = Query(...),
     redis_client: redis.StrictRedis = Depends(get_redis_client),
     token: str = Depends(get_token_from_header),
 ):
