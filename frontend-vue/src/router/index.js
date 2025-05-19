@@ -4,6 +4,7 @@ import HomePage from '@/views/HomePage.vue';
 import EHRPage from '@/views/EHRPage.vue';
 import TemplatePage from '@/views/TemplatePage.vue';
 import CompositionPage from '@/views/CompositionPage.vue';
+import AQLPage from '@/views/AQLPage.vue';
 
 const routes = [
   {
@@ -38,6 +39,12 @@ const routes = [
     name: 'composition',
     component: CompositionPage,
     meta: { sidebarIndex: 4 }, // Composition icon is index 4
+  },
+  {
+    path: '/query',
+    name: 'query',
+    component: AQLPage,
+    meta: { sidebarIndex: 5 }, // Query icon is index 5
   }
 ];
 

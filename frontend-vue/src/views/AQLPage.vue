@@ -8,7 +8,7 @@
       @logout="logout" />
 
     <div class="method-selection-zone">
-      <h3><i>Template Methods</i></h3>
+      <h3><i>Query Methods</i></h3>
       <div class="radio-group-container">
         <div class="radio-group">
           <label>
@@ -26,11 +26,15 @@
             <input type="radio" v-model="methodType" value="Post" />
             Post
           </label>
+          <label>
+            <input type="radio" v-model="methodType" value="Put" />
+            Put
+          </label>
         </div>
         <div class="radio-group">
           <label>
-            <input type="radio" v-model="onwhat" value="template" />
-            Template
+            <input type="radio" v-model="onwhat" value="query" />
+            Query
           </label>
         </div>
       </div>
@@ -68,6 +72,14 @@
             <div class="parameter-form">
 
               <form @submit.prevent="submitForm">
+                <div v-if="aqltextarea" class="form-textarea">
+                  <label for="aql">AQL Query:</label>
+                  <textarea id="aql" v-model="aql" rows="10" cols="100"></textarea>
+                </div>
+                <div v-if="aqltextarea2" class="form-textarea">
+                  <label for="aql2">Stored AQL Query:</label>
+                  <textarea id="aql2" v-model="aql2" rows="3" cols="100" readonly></textarea>
+                </div>
 
                 <div v-for="(param, index) in currentParams" :key="index" class="form-group">
                   <label>{{ param.label }}:</label>
@@ -78,7 +90,7 @@
                   <!-- New Select Dropdown -->
                   <select v-else-if="param.type === 'select'" v-model="param.value" class="form-select">
                     <!-- Default disabled option -->
-                    <option disabled value="">{{ placeholderText }}</option>
+                    <option disabled value="">{{ getPlaceholderText(param) }}</option>
                     <!-- Dynamic options from data -->
                     <option v-for="optionValue in this[param.optionsKey]" :key="optionValue" :value="optionValue">
                       {{ optionValue }}
@@ -86,9 +98,16 @@
                   </select>
                   <!-- Add a message if options failed to load -->
                   <p
-                    v-if="param.type === 'select' && !isLoadingTemplateNames && (!this[param.optionsKey] || this[param.optionsKey].length === 0)">
-                    Could not load template list.
+                    v-if="param.label === 'Query Name' && param.type === 'select' && !isLoadingQueryNames && (!queryNames || queryNames.length === 0)">
+                    Could not load query list.
                   </p>
+                  <p v-if="param.type === 'select' && (param.label === 'Version' || param.label === 'Version (Optional)') &&
+                    currentParams.find(p => p.label === 'Qualified Query Name' && p.type === 'select')?.value &&
+                    !isLoadingQueryNames &&
+                    (!versionOptions || versionOptions.length === 0)">
+                    Could not load query versions.
+                  </p>
+
                 </div>
 
 
@@ -182,7 +201,7 @@ import Circle4Spinner from '@/components/ui/Circle4Spinner.vue';
 
 
 export default defineComponent({
-  name: 'TemplatePage',
+  name: 'AQLPage',
   components: {
     Sidebar,
     UserInfoModal,
@@ -195,9 +214,14 @@ export default defineComponent({
   },
   data() {
     return {
+      queriesinfo: [],
+      aqltextarea: false,
+      aqltextarea2: false,
+      aql: '',
+      aql2: '',
       resultsName: 'results.json',
       methodType: "All",
-      onwhat: "template",
+      onwhat: "query",
       resultsOK: false,
       resultsFile: {},
       isLoading: false,
@@ -230,9 +254,12 @@ export default defineComponent({
       isLoadingComposition: false,
       isLoadingAQL: false,
       selectedFile: null,
-      templateNames: [],
+      queryNames: [],
+      versionOptions: [],
       templates: [],
-      isLoadingTemplateNames: false,
+      isLoadingQueryNames: false,
+      isLoadingQueryVersions: false,
+      nametoversions: {}
       // selectedMethodIndex: null,
     };
   },
@@ -244,16 +271,11 @@ export default defineComponent({
         return this.currentMethods.filter(method => method.type.includes(this.methodType) && method.what.includes(this.onwhat));
       }
     },
-    placeholderText() {
+    selectedQueryNameValue() {
+      const queryNameParam = this.currentParams.find(p => p.label === "Qualified Query Name" && p.type === "select");
+      return queryNameParam ? queryNameParam.value : null;
+    },
 
-      if (this.isLoadingTemplateNames) {
-        return 'Loading...';
-      } else if (this.templateNames && this.templateNames.length > 0) {
-        return 'Select Template Name';
-      } else {
-        return 'No templates available';
-      }
-    }
   },
   mounted() {
     // Fetch data when the component is first mounted
@@ -261,7 +283,7 @@ export default defineComponent({
     this.fetchTemplateData();
     this.fetchCompositionData();
     this.fetchAQLData();
-    this.currentMethods = this.getMethodsForTemplate();
+    this.currentMethods = this.getMethodsForQuery();
   },
   watch: {
     '$route'() {
@@ -277,10 +299,54 @@ export default defineComponent({
     },
     onwhat() {
       this.selectedMethod = null;
-    }
+    },
+    selectedQueryNameValue(newQueryName, oldQueryName) {
+      const versionParam = this.currentParams.find(p => (p.label === 'Version (Optional)' || p.label === 'Version') && p.type === "select");
+
+      if (newQueryName && this.nametoversions && this.nametoversions[newQueryName]) {
+        this.versionOptions = [...this.nametoversions[newQueryName]]; // Use spread to ensure reactivity if needed
+        if (versionParam) {
+          // Reset version if the new query name is different from the old one,
+          // or if the current version is no longer valid for the new query name.
+          const queryNameChanged = oldQueryName !== undefined && newQueryName !== oldQueryName;
+          if (queryNameChanged || !this.versionOptions.includes(versionParam.value)) {
+            versionParam.value = '';
+          }
+        }
+      } else {
+        this.versionOptions = [];
+        if (versionParam) {
+          versionParam.value = '';
+        }
+      }
+    },
 
   },
   methods: {
+    getPlaceholderText(param) {
+      if (param.label === 'Qualified Query Name') {
+        if (this.isLoadingQueryNames) {
+          return 'Loading...';
+        } else if (this.queryNames && this.queryNames.length > 0) {
+          return 'Please select a query name';
+        } else {
+          return 'No data available';
+        }
+      } else if (param.label === 'Version' || param.label === 'Version (Optional)') {
+        if (this.isLoadingQueryNames) {
+          return 'Loading...';
+        } else if (this.versionOptions && this.versionOptions.length > 0) {
+          return 'Please select a version';
+        } else if (this.currentParams.find(p => p.label === "Qualified Query Name" && p.type === "select")?.value) {
+          return 'No versions available';
+        } else {
+          return 'Select Query Name first';
+        }
+      }
+      else {
+        return "No data available";
+      }
+    },
     getMethodStyle(index) {
       return index === this.selectedMethod
         ? { backgroundColor: '#bad489', color: 'white' } : {};
@@ -304,14 +370,16 @@ export default defineComponent({
       const needFile = [
         { file: false, label: '' },
         { file: false, label: '' },
-        { file: true, label: 'Choose Template File' },
+        { file: false, label: '' },
+        { file: false, label: '' },
+        { file: false, label: '' },
       ];
       return needFile[index] || { file: false, label: '' };
     },
     selectMethod(index) {
       this.resultsOK = false;
       this.resultsName = 'results.json';
-      this.currentMethods = this.getMethodsForTemplate();
+      this.currentMethods = this.getMethodsForQuery();
       const index2 = this.getIndexByTypeWhat(this.currentMethods, index, this.methodType, this.onwhat)
       console.log("index", index)
       console.log("index2", index2)
@@ -326,16 +394,29 @@ export default defineComponent({
       console.log('currentfile', this.currentFile);
       console.log('labelFile', this.labelFile);
       this.results = null; // Reset results
-      if (index2 === 1) {
-        this.fetchTemplateNames();
+      if (index2 === 1 || index === 2 || index2 >= 4) {
+        this.fetchQueryNames();
+      }
+      if (index2 === 3 || index2 === 5) {
+        this.aqltextarea = true;
+        this.aqltextarea2 = false;
+      } else if (index2 === 4) {
+        this.aqltextarea = false;
+        this.aqltextarea2 = true;
+      } else {
+        this.aqltextarea = false;
+        this.aqltextarea2 = false;
       }
     },
-    getMethodsForTemplate() {
+    getMethodsForQuery() {
       const methods = {
         'methods': [
-          { label: 'List Templates', type: ['Get'], what: ['template'] },//1
-          { label: 'Retrieve Template by Name', type: ['Get'], what: ['template'] },//2
-          { label: 'Insert Template', type: ['Post'], what: ['template'] },//3
+          { label: 'List Queries', type: ['Get'], what: ['query'] },//1
+          { label: 'Retrieve Query Versions by Name', type: ['Get'], what: ['query'] },//2
+          { label: 'Retrieve Query by Name and Version', type: ['Get'], what: ['query'] },//3
+          { label: 'Insert Query', type: ['Put'], what: ['query'] },//4
+          { label: 'Run Stored Query', type: ['Get', 'Post'], what: ['query'] },//5
+          { label: 'Run Query', type: ['Get', 'Post'], what: ['query'] },//6
         ]
       };
       return methods['methods'] || [];
@@ -344,17 +425,23 @@ export default defineComponent({
     // Get actions associated with the selected method
     getActionsForMethod(index) {
       const actions = [
-        [{ label: 'Submit', action: 'submit_template_list' }],//1
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_template_get' }],//2
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_template_post' }],//3
+        [{ label: 'Submit', action: 'submit_query_list' }],//1
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_query_getv' }],//2
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_query_get' }],//3
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_query_put' }],//4
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_query_run_stored' }],//5
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_query_run' }],//6
       ];
       return actions[index] || [];
     },
     getRadioParamsForMethod(index) {
       const radioParams = [
         [],//1
-        [{ label: 'Output Format', selected: "Opt", options: ['Opt', 'Webtemplate'] }],//2
+        [],//2
         [],//3
+        [],//4
+        [{ label: 'Query Method', selected: "Get", options: ['Get', 'Post'] }],//4
+        [{ label: 'Query Method', selected: "Get", options: ['Get', 'Post'] }],//5
       ];
       return radioParams[index] || [];
     },
@@ -365,24 +452,50 @@ export default defineComponent({
         ],
         [//2
           {
-            label: "Template Name",
+            label: "Qualified Query Name",
             value: "",
             type: "select",
-            optionsKey: 'templateNames',
-            placeholder: "Select Template Name",
-          }
+            optionsKey: 'queryNames',
+            placeholder: "Select Query Name",
+          },],
+        [//3]
+          {
+            label: "Qualified Query Name",
+            value: "",
+            type: "select",
+            optionsKey: 'queryNames',
+            placeholder: "Select Query Name",
+          }, { label: 'Version', value: '', optionsKey: 'versionOptions', type: 'select', placeholder: "Select Version" }
         ],
-        [//3
-          // {
-          //   label: "Template File",
-          //   value: "",
-          //   type: "file",
-          //   placeholder: "Choose Template File",
-          // }
+        [//4
+          { label: 'Qualified Query Name', value: '', type: 'text', placeholder: "org.ehrbase.local::query1" }, { label: 'Version (Optional)', value: '', type: 'text', placeholder: "1.0.0" }],
+        [//5
+          {
+            label: "Qualified Query Name",
+            value: "",
+            type: "select",
+            optionsKey: 'queryNames',
+            placeholder: "Select Query Name",
+          },
+          { label: 'Version', value: '', type: 'select', optionsKey: 'versionOptions', placeholder: "Select version" },
+          { label: 'Fetch (Optional)', value: '', type: 'text', placeholder: "10" },
+          { label: 'Offset (Optional)', value: '', type: 'text', placeholder: "2" }
+        ],
+        [//6
+          {
+            label: "Qualified Query Name",
+            value: "",
+            type: "select",
+            optionsKey: 'queryNames',
+            placeholder: "Select Query Name",
+          },
+          { label: 'Version', value: '', type: 'select', optionsKey: 'versionOptions', placeholder: "Select version" },
+          { label: 'Fetch (Optional)', value: '', type: 'text', placeholder: "10" },
+          { label: 'Offset (Optional)', value: '', type: 'text', placeholder: "2" }
         ],
       ];
-      if (index === 1 && params[1] && params[1][0]) {
-        params[1][0].value = '';
+      if ((index === 1 || index >= 4) && params[index] && params[index][0]) {
+        params[index][0].value = '';
       }
       return params[index] || [];
     },
@@ -390,12 +503,12 @@ export default defineComponent({
     // Handle action button click
     async executeAction(action) {
       this.results = null
-      if (action == 'submit_template_list') //get template list
+      if (action == 'submit_query_list') //get query list
       {
         try {
-          this.templates = await this.fetchTemplateNames();
-          console.log('templates', this.templates);
-          this.results = JSON.stringify(this.templates, null, 2);
+          const queryfetch = await this.fetchQueryNames();
+          console.log('queryfetch', queryfetch);
+          this.results = JSON.stringify(queryfetch.versions, null, 2);
           this.resultsOK = true;
         }
         catch (error) {
@@ -412,84 +525,63 @@ export default defineComponent({
           fileInput.value = null;
         }
 
-      } else if (action == 'submit_template_get') //get template by name
+      } else if (action == 'submit_query_getv') //get query versions by name 
       {
         this.resultsOK = false;
-        const tid = this.currentParams.find(p => p.label === 'Template Name');
-        if (!tid.value) {
-          this.results = 'Template Name is required';
+        const queryname = this.currentParams.find(p => p.label === 'Qualified Query Name')?.value;
+        console.log('queryname', queryname);
+        if (!queryname) {
+          this.results = 'Qualified Query Name is required';
           return;
         }
-        console.log('tid is', tid?.value);
-        this.format = this.currentRadioParams.find(p => p.label === 'Output Format')?.selected || "Opt";
         try {
-          const templateResults = await this.gettemplate(tid.value, this.format);
-          console.log('results', templateResults);
-
-          if (this.format.toLowerCase() == 'opt') {
-            this.resultsName = 'results.opt';
-            this.results = this.formatXml(templateResults);
-          } else {
-            this.resultsName = 'results.json';
-            this.results = JSON.stringify(templateResults, null, 2);
-          }
+          const queryResults = await this.getqueryversions(queryname);
+          console.log('results', queryResults);
+          this.resultsOK = true;
+          this.resultsName = 'results.json';
+          this.results = JSON.stringify(queryResults, null, 2);
         }
         catch (error) {
           console.error("Error in executeAction:", error);
           this.results = `Error: ${error.message}`;
         }
-
-      }
-      else if (action == 'submit_template_post') //post template
+      } else if (action == 'submit_query_get') //get query by name and version 
       {
-        console.log('inside submit_template_post')
         this.resultsOK = false;
-        if (!this.selectedFile) {
-          this.results = 'Please select a Template file'
+        const queryname = this.currentParams.find(p => p.label === 'Qualified Query Name')?.value;
+        console.log('queryname', queryname);
+        if (!queryname) {
+          this.results = 'Qualified Query Name is required';
+          return;
+        }
+        const queryversion = this.currentParams.find(p => p.label === 'Version')?.value;
+        console.log('queryversion', queryversion);
+        if (!queryversion) {
+          this.results = 'Version is required';
           return;
         }
         try {
-          const reader = new FileReader();
-          reader.onload = async () => {
-            try {
-              const parser = new DOMParser();
-              const template = parser.parseFromString(reader.result, "application/xml");
-              console.log('template is', template);
-              const templateResults = await this.posttemplate(template);
-              console.log('results', templateResults);
-              this.results = JSON.stringify(templateResults, null, 2);
-            }
-            catch (error) {
-              console.error("Error uploading OPT file:", error);
-              this.results = `Error: ${error.message}`;
-            }
-          };
-          reader.readAsText(this.selectedFile);
+          const queryResults = await this.getquerybynameandversion(queryname, queryversion);
+          console.log('results', queryResults);
+          this.resultsOK = true;
+          this.resultsName = 'results.json';
+          this.results = JSON.stringify(queryResults, null, 2);
         }
-        catch (error2) {
-          console.error("Error in posttemplate:", error2);
-          this.results = `Error: ${error2.message}`;
+        catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
         }
       }
-      else {
-        this.results = null;
-        this.resultsOK = false;
-      }
 
 
-    },
 
-    // Submit form with parameter values
-    // submitForm() {
-    //   console.log("Form submitted");
-    //   this.executeAction(this.selectedMethod);
-    // },
 
-    // Handle file upload
-    handleFileUpload(event) {
-      const file = event.target.files[0];
-      this.selectedFile = file;
-      console.log('File selected:', file);
+
+
+
+
+
+
     },
 
     //for user info modal
@@ -509,15 +601,15 @@ export default defineComponent({
       this.$router.push("/login"); // Redirect to login page
     },
     //for template list and get
-    async fetchTemplateNames() {
+    async fetchQueryNames() {
       try {
-        console.log('fetchTemplateNames called');
-        this.isLoadingTemplateNames = true;
-        this.templateNames = [];
-        const response = await axios.get('http://127.0.0.1:5000/template/templates',
+        console.log('fetchQueryNames called');
+        this.isLoadingQueryNames = true;
+        this.queryNames = [];
+        const response = await axios.get('http://127.0.0.1:5000/query/query',
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
-        this.isLoadingTemplateNames = false;
+        this.isLoadingQueryNames = false;
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -528,16 +620,17 @@ export default defineComponent({
           return;
         }
         // Assuming the backend returns data in this structure
-        console.log(response)
-        console.log(response.data)
-        this.templates = response.data
-        console.log('this.templates', this.templates);
-        console.log(typeof this.templates);
-        this.templateNames = this.templates.template.map(template => template.template_id);
-        console.log('this.templateNames', this.templateNames);
+        console.log(response);
+        console.log(response.data);
+        this.nametoversions = response.data.query.nametoversions;
+        this.queries = response.data.query.queries;
+        console.log('this.nametoversions', this.nametoversions);
+        this.queryNames = Object.keys(this.nametoversions);
+        console.log('this.queryNames', this.queryNames);
+        this.queriesinfo = response.data.query.queriesinfo;
 
       } catch (error) {
-        console.error("Error fetching templates:", error);
+        console.error("Error fetching queries:", error);
         if (error?.response?.status) {
           if (error.response.status === 401) {
             console.error("Unauthorized access. Please login again.");
@@ -547,10 +640,10 @@ export default defineComponent({
         }
       }
       finally {
-        this.isLoadingNames = false;
+        this.isLoadingQueryNames = false;
       }
 
-      return this.templates;
+      return this.queriesinfo;
     },
     //for ehr info modal
     async fetchEHRdata() {
@@ -771,22 +864,16 @@ export default defineComponent({
       URL.revokeObjectURL(url);
       // const blob = new Blob([content], { type: format === 'json' ? "application/json" : "application/xml" });
     },
-
-
-
-    async gettemplate(templateid, format) {
+    async getqueryversions(queryname) {
       try {
-        console.log('gettemplate called');
+        console.log('getqueryversions called');
         this.isLoading = true;
         this.resultsOK = false;
-        console.log('templateid is', templateid);
-        console.log('format is', format);
-        const response = await axios.get('http://127.0.0.1:5000/template/',
+        const response = await axios.get('http://127.0.0.1:5000/query/',
           {
             headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
             params: {
-              templateid: templateid,
-              format: format
+              queryname: queryname,
             },
             timeout: 2000000
           });
@@ -801,10 +888,51 @@ export default defineComponent({
           return;
         }
         this.resultsOK = true;
-        return response.data.template;
+        return response.data.query;
 
       } catch (error) {
-        console.error("Error fetching template", error);
+        console.error("Error fetching query", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+        }
+      }
+      finally {
+        this.isLoading = false;
+      }
+    },
+    async getquerybynameandversion(queryname, queryversion) {
+      try {
+        console.log('getquerybynameandversion called');
+        this.isLoading = true;
+        this.resultsOK = false;
+        const response = await axios.get('http://127.0.0.1:5000/query/',
+          {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
+            params: {
+              queryname: queryname,
+              version: queryversion,
+            },
+            timeout: 2000000
+          });
+        this.isLoading = false;
+        if (response.status === 401) {
+          console.error("Unauthorized access. Please login again.");
+          this.logout();
+          return
+        }
+        if (response.status != 200) {
+          console.error("Error fetching query:", response);
+          return;
+        }
+        this.resultsOK = true;
+        return response.data.query;
+
+      } catch (error) {
+        console.error("Error fetching query", error);
         if (error?.response?.status) {
           if (error.response.status === 401) {
             console.error("Unauthorized access. Please login again.");

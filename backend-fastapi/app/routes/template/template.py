@@ -88,7 +88,7 @@ async def get_template(
         if 400 <= e.status_code < 500:
             insertlogline(
                 redis_client,
-                "Get template: template {template_id} could not be retrieved",
+                f"Get template: template {template_id} could not be retrieved",
             )
             return JSONResponse(
                 content={"template": e.__dict__}, status_code=e.status_code
@@ -143,7 +143,7 @@ async def post_template(
         if 400 <= e.status_code < 500:
             insertlogline(
                 redis_client,
-                "Post template: template could not be inserted successfully",
+                f"Post template: template {templateid} could not be inserted successfully",
             )
             return JSONResponse(
                 content={"template": e.__dict__}, status_code=e.status_code
