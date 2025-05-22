@@ -65,19 +65,19 @@ async def get_sidebar_templates_ehrbase(
     logger = get_logger(request)
     logger.debug("inside get_sidebar_templates")
     async with httpx.AsyncClient() as client:
-        if redis_client:
-            redistatus = get_redis_status(redis_client)
-            if (
-                redistatus == "ok"
-                and redis_client.exists("key_templates")
-                and redis_client.llen("key_templates") > 0
-            ):
-                # Retrieve data from Redis
-                logger.debug("Retrieving data from Redis")
-                templates = redis_client.lrange("key_templates", 0, -1)
-                templates = [json.loads(t) for t in templates]
-                print(f"templates: {templates}")
-                return templates
+        # if redis_client:
+        #     redistatus = get_redis_status(redis_client)
+        #     if (
+        #         redistatus == "ok"
+        #         and redis_client.exists("key_templates")
+        #         and redis_client.llen("key_templates") > 0
+        #     ):
+        #         # Retrieve data from Redis
+        #         logger.debug("Retrieving data from Redis")
+        #         templates = redis_client.lrange("key_templates", 0, -1)
+        #         templates = [json.loads(t) for t in templates]
+        #         print(f"templates: {templates}")
+        #         return templates
         logger.debug("Retrieving data from EHRBase server")
         # retrieve data from EHRBase server
         templates = []

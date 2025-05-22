@@ -135,4 +135,5 @@ async def post_template_ehrbase(
         myresp["status_code"] = response.status_code
         if 200 <= response.status_code < 210:
             myresp["status"] = "success"
+
         return myresp

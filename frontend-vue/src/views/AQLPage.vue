@@ -72,69 +72,245 @@
             <div class="parameter-form">
 
               <form @submit.prevent="submitForm">
-                <div v-if="aqltextarea" class="form-textarea">
-                  <label for="aql">AQL Query:</label>
-                  <textarea id="aql" v-model="aql" rows="10" cols="100"></textarea>
+                <div v-if="filteredMethods[selectedMethod].label === 'Run Stored Query'" class="form-group">
+
+                  <div v-for="(param, index) in currentParams.filter(p => p.type === 'select')" :key="index"
+                    class="form-group">
+
+                    <label>{{ param.label }}:</label>
+                    <select v-model="param.value" class="form-select">
+
+                      <!-- Default disabled option -->
+                      <option disabled value="">{{ getPlaceholderText(param) }}</option>
+                      <!-- Dynamic options from data -->
+                      <option v-for="optionValue in this[param.optionsKey]" :key="optionValue" :value="optionValue">
+                        {{ optionValue }}
+                      </option>
+                    </select>
+                    <!-- Add a message if options failed to load -->
+                    <p
+                      v-if="param.label === 'Query Name' && param.type === 'select' && !isLoadingQueryNames && (!queryNames || queryNames.length === 0)">
+                      Could not load query list.
+                    </p>
+                    <p v-if="param.type === 'select' && (param.label === 'Version' || param.label === 'Version (Optional)') &&
+                      currentParams.find(p => p.label === 'Qualified Query Name' && p.type === 'select')?.value &&
+                      !isLoadingQueryNames &&
+                      (!versionOptions || versionOptions.length === 0)">
+                      Could not load query versions.
+                    </p>
+
+                  </div>
+
+
+                  <div v-if="aqltextarea2" class="form-textarea2">
+                    <label for="aql">Stored AQL Query:</label>
+                    <textarea id="aql" v-model="aql" rows="6" cols="80" readonly class="big-textarea"
+                      style="font-size: 18px;"></textarea>
+                  </div>
+
+
+
+
+                  <div v-for="(param, index) in currentParams.filter(p => p.type !== 'select')" :key="index"
+                    class="form-group">
+                    <label>{{ param.label }}:</label>
+
+
+                    <input v-model="param.value" :type="param.type" :placeholder="param.placeholder" />
+
+
+                  </div>
+
+
+
+                  <div v-for="(radioparam, radioIndex) in currentRadioParams" :key="radioIndex"
+                    class="form-check-group">
+                    <label>{{ radioparam.label }}:</label>
+                    <div v-for="(option, optionIndex) in radioparam.options" :key="optionIndex" class="form-check">
+                      <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio"
+                        :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
+                        class="form-check-input" />
+                      <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
+                      }}</label>
+                    </div>
+                  </div>
+
+                  <div v-if="currentFile" class="file-input">
+                    <label>{{ labelFile }}</label>
+                    <input type="file" ref="fileInput" @change="handleFileUpload" />
+                  </div>
+
+                  <div class="action-group">
+                    <div v-for="(action, index) in methodActions" :key="index" class="action-button">
+                      <!-- <button type="submit">{{ action.label }}</button> -->
+                      <button @click="executeAction(action.action)">{{ action.label }}</button>
+                    </div>
+                  </div>
+
                 </div>
-                <div v-if="aqltextarea2" class="form-textarea">
-                  <label for="aql2">Stored AQL Query:</label>
-                  <textarea id="aql2" v-model="aql2" rows="3" cols="100" readonly></textarea>
-                </div>
-
-                <div v-for="(param, index) in currentParams" :key="index" class="form-group">
-                  <label>{{ param.label }}:</label>
-
-                  <!-- Existing Input for text, etc. -->
-                  <input v-if="param.type !== 'select'" v-model="param.value" :type="param.type"
-                    :placeholder="param.placeholder" />
-                  <!-- New Select Dropdown -->
-                  <select v-else-if="param.type === 'select'" v-model="param.value" class="form-select">
-                    <!-- Default disabled option -->
-                    <option disabled value="">{{ getPlaceholderText(param) }}</option>
-                    <!-- Dynamic options from data -->
-                    <option v-for="optionValue in this[param.optionsKey]" :key="optionValue" :value="optionValue">
-                      {{ optionValue }}
-                    </option>
-                  </select>
-                  <!-- Add a message if options failed to load -->
-                  <p
-                    v-if="param.label === 'Query Name' && param.type === 'select' && !isLoadingQueryNames && (!queryNames || queryNames.length === 0)">
-                    Could not load query list.
-                  </p>
-                  <p v-if="param.type === 'select' && (param.label === 'Version' || param.label === 'Version (Optional)') &&
-                    currentParams.find(p => p.label === 'Qualified Query Name' && p.type === 'select')?.value &&
-                    !isLoadingQueryNames &&
-                    (!versionOptions || versionOptions.length === 0)">
-                    Could not load query versions.
-                  </p>
-
-                </div>
 
 
+                <div v-else-if="filteredMethods[selectedMethod].label === 'Run Query'" class="form-group">
+                  <div class="form-group-sidebyside">
+                    <div class="left-side">
+                      <label>Stored Queries</label>
+                      <div v-for="(param, index) in currentParams.filter(p => p.type === 'select')" :key="index"
+                        class="form-group">
+                        <label>{{ param.label }}:</label>
+                        <select v-model="param.value" class="form-select">
+
+                          <!-- Default disabled option -->
+                          <option disabled value="">{{ getPlaceholderText(param) }}</option>
+                          <!-- Dynamic options from data -->
+                          <option v-for="optionValue in this[param.optionsKey]" :key="optionValue" :value="optionValue">
+                            {{ optionValue }}
+                          </option>
+                        </select>
+                        <!-- Add a message if options failed to load -->
+                        <p
+                          v-if="param.label === 'Query Name' && param.type === 'select' && !isLoadingQueryNames && (!queryNames || queryNames.length === 0)">
+                          Could not load query list.
+                        </p>
+                        <p v-if="param.type === 'select' && (param.label === 'Version' || param.label === 'Version (Optional)') &&
+                          currentParams.find(p => p.label === 'Qualified Query Name' && p.type === 'select')?.value &&
+                          !isLoadingQueryNames &&
+                          (!versionOptions || versionOptions.length === 0)">
+                          Could not load query versions.
+                        </p>
+
+                      </div>
+                    </div>
+
+
+                    <div class="right-side">
+                      <label class="preset-label">Pre-set queries:</label>
+                      <div v-for="choice in Object.keys(radioChoices)" :key="choice" class="radio-item">
+                        <input type="radio" v-model="selectedRadio" :value="choice" class="radio-input"
+                          :id="'radio-' + choice" />
+                        <label :for="'radio-' + choice" class="radio-label">{{ choice }}</label>
+
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <div class="aqltext">
+                    <label for="aql">AQL Query:</label>
+                    <textarea id="aql" v-model="aql" rows="6" cols="80" class="big-textarea"
+                      style="font-size: 18px;"></textarea>
+                  </div>
+
+
+                  <div v-for="(param, index) in currentParams" :key="index" class="form-group">
+                    <div v-if="param.type !== 'select'">
+                      <label>{{ param.label }}:</label>
+
+
+                      <input v-if="param.type !== 'select'" v-model="param.value" :type="param.type"
+                        :placeholder="param.placeholder" />
+
+                    </div>
+
+                  </div>
 
 
 
-                <div v-for="(radioparam, radioIndex) in currentRadioParams" :key="radioIndex" class="form-check-group">
-                  <label>{{ radioparam.label }}:</label>
-                  <div v-for="(option, optionIndex) in radioparam.options" :key="optionIndex" class="form-check">
-                    <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
-                      :value="option" v-model="radioparam.selected" class="form-check-input" />
-                    <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                    }}</label>
+                  <div v-for="(radioparam, radioIndex) in currentRadioParams" :key="radioIndex"
+                    class="form-check-group">
+                    <label>{{ radioparam.label }}:</label>
+                    <div v-for="(option, optionIndex) in radioparam.options" :key="optionIndex" class="form-check">
+                      <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio"
+                        :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
+                        class="form-check-input" />
+                      <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
+                      }}</label>
+                    </div>
+                  </div>
+
+
+                  <div class="action-group">
+                    <div v-for="(action, index) in methodActions" :key="index" class="action-button">
+                      <!-- <button type="submit">{{ action.label }}</button> -->
+                      <button @click="executeAction(action.action)">{{ action.label }}</button>
+                    </div>
                   </div>
                 </div>
 
-                <div v-if="currentFile" class="file-input">
-                  <label>{{ labelFile }}</label>
-                  <input type="file" ref="fileInput" @change="handleFileUpload" />
-                </div>
 
-                <div class="action-group">
-                  <div v-for="(action, index) in methodActions" :key="index" class="action-button">
-                    <!-- <button type="submit">{{ action.label }}</button> -->
-                    <button @click="executeAction(action.action)">{{ action.label }}</button>
+
+                <div v-else class="form-group">
+
+
+
+                  <div v-if="aqltextarea" class="form-textarea">
+                    <label for="aql">AQL Query:</label>
+                    <textarea id="aql" v-model="aql" rows="6" cols="80" class="big-textarea"
+                      style="font-size: 18px;"></textarea>
+                  </div>
+                  <div v-if="aqltextarea2" class="form-textarea2">
+                    <label for="aql">Stored AQL Query:</label>
+                    <textarea id="aql" v-model="aql" rows="6" cols="80" readonly class="big-textarea"
+                      style="font-size: 18px;"></textarea>
+                  </div>
+
+                  <div v-for="(param, index) in currentParams" :key="index" class="form-group">
+                    <label>{{ param.label }}:</label>
+
+                    <!-- Existing Input for text, etc. -->
+                    <input v-if="param.type !== 'select'" v-model="param.value" :type="param.type"
+                      :placeholder="param.placeholder" />
+                    <!-- New Select Dropdown -->
+                    <select v-else-if="param.type === 'select'" v-model="param.value" class="form-select">
+                      <!-- Default disabled option -->
+                      <option disabled value="">{{ getPlaceholderText(param) }}</option>
+                      <!-- Dynamic options from data -->
+                      <option v-for="optionValue in this[param.optionsKey]" :key="optionValue" :value="optionValue">
+                        {{ optionValue }}
+                      </option>
+                    </select>
+                    <!-- Add a message if options failed to load -->
+                    <p
+                      v-if="param.label === 'Query Name' && param.type === 'select' && !isLoadingQueryNames && (!queryNames || queryNames.length === 0)">
+                      Could not load query list.
+                    </p>
+                    <p v-if="param.type === 'select' && (param.label === 'Version' || param.label === 'Version (Optional)') &&
+                      currentParams.find(p => p.label === 'Qualified Query Name' && p.type === 'select')?.value &&
+                      !isLoadingQueryNames &&
+                      (!versionOptions || versionOptions.length === 0)">
+                      Could not load query versions.
+                    </p>
+
+                  </div>
+
+
+
+
+
+                  <div v-for="(radioparam, radioIndex) in currentRadioParams" :key="radioIndex"
+                    class="form-check-group">
+                    <label>{{ radioparam.label }}:</label>
+                    <div v-for="(option, optionIndex) in radioparam.options" :key="optionIndex" class="form-check">
+                      <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio"
+                        :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
+                        class="form-check-input" />
+                      <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
+                        }}</label>
+                    </div>
+                  </div>
+
+                  <div v-if="currentFile" class="file-input">
+                    <label>{{ labelFile }}</label>
+                    <input type="file" ref="fileInput" @change="handleFileUpload" />
+                  </div>
+
+                  <div class="action-group">
+                    <div v-for="(action, index) in methodActions" :key="index" class="action-button">
+                      <!-- <button type="submit">{{ action.label }}</button> -->
+                      <button @click="executeAction(action.action)">{{ action.label }}</button>
+                    </div>
                   </div>
                 </div>
+
               </form>
             </div>
           </div>
@@ -214,11 +390,12 @@ export default defineComponent({
   },
   data() {
     return {
+      radioChoices: { 'None': '', 'All EHRs: EHR id': 'SELECT e/ehr_id/value \nFROM EHR e', 'All Compositions: EHR id, Composition id': 'SELECT e/ehr_id/value,\nc/uid/value \nFROM EHR e \nCONTAINS COMPOSITION c', 'All Compositions: EHR id, Composition id, Template id': 'SELECT e/ehr_id/value,\nc/uid/value,\nc/archetype_details/template_id/value \nFROM EHR e \nCONTAINS COMPOSITION c' },
+      selectedRadio: 'None',
       queriesinfo: [],
       aqltextarea: false,
       aqltextarea2: false,
       aql: '',
-      aql2: '',
       resultsName: 'results.json',
       methodType: "All",
       onwhat: "query",
@@ -259,8 +436,9 @@ export default defineComponent({
       templates: [],
       isLoadingQueryNames: false,
       isLoadingQueryVersions: false,
-      nametoversions: {}
+      nametoversions: {},
       // selectedMethodIndex: null,
+      index2: null,
     };
   },
   computed: {
@@ -275,6 +453,12 @@ export default defineComponent({
       const queryNameParam = this.currentParams.find(p => p.label === "Qualified Query Name" && p.type === "select");
       return queryNameParam ? queryNameParam.value : null;
     },
+    selectedVersionValue() {
+      const versionParam = this.currentParams.find(p =>
+        (p.label === 'Version' || p.label === 'Version (Optional)') && p.type === 'select'
+      );
+      return versionParam ? versionParam.value : null;
+    }
 
   },
   mounted() {
@@ -319,8 +503,20 @@ export default defineComponent({
           versionParam.value = '';
         }
       }
-    },
 
+    },
+    selectedRadio(newVal) {
+      if (newVal !== 'None') {
+        this.aql = this.radioChoices[newVal];
+      } else {
+        this.aql = '';
+      }
+    },
+    selectedVersionValue(newVersion, oldVersion) {
+      if (newVersion !== oldVersion) {
+        this.fetchQuery(this.selectedQueryNameValue, newVersion);
+      }
+    }
   },
   methods: {
     getPlaceholderText(param) {
@@ -377,30 +573,31 @@ export default defineComponent({
       return needFile[index] || { file: false, label: '' };
     },
     selectMethod(index) {
+      this.aql = '';
       this.resultsOK = false;
       this.resultsName = 'results.json';
       this.currentMethods = this.getMethodsForQuery();
-      const index2 = this.getIndexByTypeWhat(this.currentMethods, index, this.methodType, this.onwhat)
+      this.index2 = this.getIndexByTypeWhat(this.currentMethods, index, this.methodType, this.onwhat)
       console.log("index", index)
-      console.log("index2", index2)
+      console.log("index2", this.index2)
       this.selectedMethod = index;
       // this.selectedMethodIndex = index;
-      this.methodActions = this.getActionsForMethod(index2);
-      this.currentParams = this.getParamsForMethod(index2);
-      this.currentRadioParams = this.getRadioParamsForMethod(index2);
-      this.needFile = this.getNeedFile(index2);
+      this.methodActions = this.getActionsForMethod(this.index2);
+      this.currentParams = this.getParamsForMethod(this.index2);
+      this.currentRadioParams = this.getRadioParamsForMethod(this.index2);
+      this.needFile = this.getNeedFile(this.index2);
       this.currentFile = this.needFile.file;
       this.labelFile = this.needFile.label;
       console.log('currentfile', this.currentFile);
       console.log('labelFile', this.labelFile);
       this.results = null; // Reset results
-      if (index2 === 1 || index === 2 || index2 >= 4) {
+      if (this.index2 === 1 || index === 2 || this.index2 >= 4) {
         this.fetchQueryNames();
       }
-      if (index2 === 3 || index2 === 5) {
+      if (this.index2 === 3 || this.index2 === 5) {
         this.aqltextarea = true;
         this.aqltextarea2 = false;
-      } else if (index2 === 4) {
+      } else if (this.index2 === 4) {
         this.aqltextarea = false;
         this.aqltextarea2 = true;
       } else {
@@ -469,7 +666,7 @@ export default defineComponent({
         ],
         [//4
           { label: 'Qualified Query Name', value: '', type: 'text', placeholder: "org.ehrbase.local::query1" }, { label: 'Version (Optional)', value: '', type: 'text', placeholder: "1.0.0" }],
-        [//5
+        [//5      
           {
             label: "Qualified Query Name",
             value: "",
@@ -479,7 +676,8 @@ export default defineComponent({
           },
           { label: 'Version', value: '', type: 'select', optionsKey: 'versionOptions', placeholder: "Select version" },
           { label: 'Fetch (Optional)', value: '', type: 'text', placeholder: "10" },
-          { label: 'Offset (Optional)', value: '', type: 'text', placeholder: "2" }
+          { label: 'Offset (Optional)', value: '', type: 'text', placeholder: "2" },
+          { label: 'Query Parameters (Optional)', value: '', type: 'text', placeholder: "param1=value1,param2=value2" },
         ],
         [//6
           {
@@ -491,7 +689,8 @@ export default defineComponent({
           },
           { label: 'Version', value: '', type: 'select', optionsKey: 'versionOptions', placeholder: "Select version" },
           { label: 'Fetch (Optional)', value: '', type: 'text', placeholder: "10" },
-          { label: 'Offset (Optional)', value: '', type: 'text', placeholder: "2" }
+          { label: 'Offset (Optional)', value: '', type: 'text', placeholder: "2" },
+          { label: 'Query Parameters (Optional)', value: '', type: 'text', placeholder: "param1=value1,param2=value2" },
         ],
       ];
       if ((index === 1 || index >= 4) && params[index] && params[index][0]) {
@@ -572,6 +771,39 @@ export default defineComponent({
           this.results = `Error: ${error.message}`;
         }
       }
+      else if (action == 'submit_query_put') //post query (though it's a put call)
+      {
+        this.resultsOK = false;
+        if (this.aql === '' || !this.aql.toLowerCase().includes('select') || !this.aql.toLowerCase().includes('from')) {
+          this.results = 'An AQL Query is required';
+          return;
+        }
+        const queryname = this.currentParams.find(p => p.label === 'Qualified Query Name')?.value;
+        console.log('queryname', queryname);
+        if (!queryname) {
+          this.results = 'A Qualified Query Name is required';
+          return;
+        }
+        const queryversion = this.currentParams.find(p => p.label === 'Version (Optional)')?.value;
+        console.log('queryversion', queryversion);
+        if (!queryversion) {
+          this.queryversion = '';
+        } else {
+          this.queryversion = queryversion;
+        }
+        console.log('queryversion', this.queryversion);
+        try {
+          const queryResults = await this.putquery(this.aql, queryname, this.queryversion);
+          console.log('results', queryResults);
+          this.resultsOK = true;
+          this.resultsName = 'results.json';
+          this.results = JSON.stringify(queryResults, null, 2);
+        }
+        catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
+        }
+      }
 
 
 
@@ -600,7 +832,7 @@ export default defineComponent({
       sessionStorage.clear(); // Clear session storage
       this.$router.push("/login"); // Redirect to login page
     },
-    //for template list and get
+    //for queries list and get
     async fetchQueryNames() {
       try {
         console.log('fetchQueryNames called');
@@ -628,6 +860,14 @@ export default defineComponent({
         this.queryNames = Object.keys(this.nametoversions);
         console.log('this.queryNames', this.queryNames);
         this.queriesinfo = response.data.query.queriesinfo;
+        if (this.index2 === 5) {
+          console.log('queryNamessssssssss', this.queryNames);
+          if (!this.queryNames.includes('None')) {
+            this.queryNames.unshift('None');
+            console.log('queryNamessssssssss', this.queryNames);
+            this.nametoversions['None'] = [''];
+          }
+        }
 
       } catch (error) {
         console.error("Error fetching queries:", error);
@@ -945,29 +1185,80 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-    async posttemplate(template) {
-      console.log('inside posttemplate')
+    async fetchQuery(queryname, queryversion) {
+      try {
+        if (queryname === 'None') {
+          this.aql = '';
+          return;
+        }
+        if (!queryname && !queryversion) {
+          return;
+        }
+        console.log('fetchQuery called');
+
+        const response = await axios.get('http://127.0.0.1:5000/query/',
+          {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
+            params: {
+              queryname: queryname,
+              version: queryversion,
+            },
+            timeout: 2000000
+          });
+        this.isLoading = false;
+        if (response.status === 401) {
+          console.error("Unauthorized access. Please login again.");
+          this.logout();
+          return
+        }
+        if (response.status != 200) {
+          console.error("Error fetching query:", response);
+          return;
+        }
+        this.aql = response.data.query.q;
+
+      } catch (error) {
+        console.error("Error fetching query", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+        }
+      }
+
+    },
+    async putquery(q, queryname, queryversion) {
+      console.log('inside putquery');
       console.log(localStorage.getItem("authToken"))
       this.isLoading = true;
       this.resultsOK = false;
-      const serializer = new XMLSerializer();
-      const templateString = serializer.serializeToString(template);
-      console.log('templateString=', templateString);
       // await this.sleep(5000);
+      console.log('q', q);
+      console.log('queryname', queryname);
+      console.log('queryversion', queryversion);
       try {
-        const response = await axios.post(`http://127.0.0.1:5000/template/`,
-          { "template": templateString },
+        const response = await axios.put(`http://127.0.0.1:5000/query/`,
+          {},
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
             },
+            params: {
+              "q": q,
+              "queryname": queryname,
+              "version": queryversion,
+              "qtype": "AQL"
+            },
             timeout: 2000000,
-          });
+          },
+        );
         this.isLoading = false;
-        return response.data.template;
+        return response.data.query;
       }
       catch (error) {
-        console.error("Error in posttemplate:", error);
+        console.error("Error in putquery:", error);
         if (error?.response?.status) {
           if (error.response.status === 401) {
             console.error("Unauthorized access. Please login again.");
@@ -984,29 +1275,7 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-    formatXml(xml) {
-      let formatted = '';
-      const reg = /(>)(<)(\/*)/g;
-      xml = xml.replace(reg, '$1\n$2$3'); // Ensuring proper line breaks between tags
 
-      let pad = 0;
-      xml.split('\n').forEach(node => {
-        // Decrease indentation before closing tags
-        if (node.match(/^<\/\w/)) {
-          pad -= 1;
-        }
-
-        // Add indentation and the node itself
-        formatted += '  '.repeat(Math.max(pad, 0)) + node + '\n'; // Ensure pad is not negative
-
-        // Increase indentation after opening tags (not self-closing)
-        if (node.match(/^<[^!/?\w]/) && !node.endsWith('/>')) {
-          pad += 1;
-        }
-      });
-
-      return formatted;
-    }
 
 
 
@@ -1146,7 +1415,7 @@ h1 {
 
 
 .parameter-form .form-group {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   /* Adjust the spacing between form groups */
 }
 
@@ -1343,11 +1612,73 @@ h1 {
   z-index: 1;
 }
 
-/* .results-section,
-.results-container,
-.results-content,
-.results-content>div,
-.results-content>pre {
-  border: 1px dashed red;
+.form-textarea {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* 
+.big-textarea {
+  font-size: 30px;
+  font-family: monospace;
+} */
+
+.form-aqltext {
+  margin-top: 0px;
+  margin-bottom: 10px;
+}
+
+.form-aqltext textarea {
+  margin-top: 0px;
+}
+
+.form-group-sidebyside {
+  display: flex;
+  gap: 100px;
+  align-items: flex-start;
+  margin-bottom: 0px;
+}
+
+.left-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.right-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0px;
+}
+
+.preset-label {
+  /* font-weight: bold; */
+  margin-bottom: 20px;
+}
+
+.radio-item {
+  display: grid;
+  grid-template-columns: 15px 1fr;
+  align-items: start;
+  column-gap: 10px;
+  margin-bottom: 0px;
+  margin-top: 0px;
+}
+
+.radio-input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.radio-label {
+  white-space: normal;
+  line-height: 1.1;
+}
+
+/* 
+* {
+  outline: 1px dashed rgba(243, 5, 5, 0.2);
 } */
 </style>
