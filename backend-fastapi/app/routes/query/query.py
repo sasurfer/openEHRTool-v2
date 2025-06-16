@@ -9,6 +9,10 @@ from app.backend_ehrbase.query.query import (
     get_queries_ehrbase,
     get_query_ehrbase,
     put_query_ehrbase,
+    runstored_query_get_ehrbase,
+    runstored_query_post_ehrbase,
+    run_query_get_ehrbase,
+    run_query_post_ehrbase,
 )
 import redis
 from app.dependencies.redis_dependency import get_redis_client
@@ -66,7 +70,7 @@ async def get_query(
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
         if version != None:
-            AQLVersion(version=version)
+            AQLVersion(root=version)
     except Exception as e:
         logger.error(f"An exception occurred during checkversion: {e}")
         raise HTTPException(
@@ -134,7 +138,7 @@ async def put_query(
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
         if version != None and version != "":
-            AQLVersion(version=version)
+            AQLVersion(root=version)
     except Exception as e:
         logger.error(f"An exception occurred during checkversion: {e}")
         raise HTTPException(
@@ -196,3 +200,189 @@ async def put_query(
         else:
             print(f"An exception occurred during put_query: {e}")
             raise HTTPException(status_code=500, detail="Server error during put_query")
+
+
+@router.get("/runstored")
+async def runstored_query_get(
+    request: Request,
+    queryname: str = Query(...),
+    version: AQLVersion = Query(...),
+    fetch: Optional[int] = Query(None),
+    offset: Optional[int] = Query(None),
+    queryparams: Optional[str] = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside runstored_query_get")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        version = version.root
+        if queryparams:
+            queryparams = queryparams.replace("%3D", "=").replace("%2C", ",")
+        url_base = request.app.state.url_base
+        response = await runstored_query_get_ehrbase(
+            request, auth, url_base, queryname, version, fetch, offset, queryparams
+        )
+        insertlogline(
+            redis_client,
+            f"Run (Get) query stored: ran query {queryname} version {version}  successfully",
+        )
+        return JSONResponse(content={"query": response["query"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during runstored_query_get: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Run (Get) query stored: query {queryname} version {version} ran unsuccessfully",
+            )
+            return JSONResponse(
+                content={"query": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during runstored_query_get: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during runstored_query_get"
+            )
+
+
+@router.post("/runstored")
+async def runstored_query_post(
+    request: Request,
+    queryname: str = Query(...),
+    version: AQLVersion = Query(...),
+    fetch: Optional[int] = Query(None),
+    offset: Optional[int] = Query(None),
+    queryparams: Optional[str] = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside runstored_query_post")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        version = version.root
+        if queryparams:
+            queryparams = queryparams.replace("%3D", "=").replace("%2C", ",")
+        url_base = request.app.state.url_base
+        response = await runstored_query_post_ehrbase(
+            request, auth, url_base, queryname, version, fetch, offset, queryparams
+        )
+        insertlogline(
+            redis_client,
+            f"Run (Post) query stored: ran query {queryname} version {version}  successfully",
+        )
+        return JSONResponse(content={"query": response["query"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during runstored_query_post: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Run (Post) query stored: query {queryname} version {version} ran unsuccessfully",
+            )
+            return JSONResponse(
+                content={"query": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during runstored_query_post: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during runstored_query_post"
+            )
+
+
+@router.get("/run")
+async def run_query_get(
+    request: Request,
+    q: str = Query(...),
+    fetch: Optional[int] = Query(None),
+    offset: Optional[int] = Query(None),
+    queryparams: Optional[str] = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside run_query_get")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        if queryparams:
+            queryparams = queryparams.replace("%3D", "=").replace("%2C", ",")
+        url_base = request.app.state.url_base
+        response = await run_query_get_ehrbase(
+            request, auth, url_base, q, fetch, offset, queryparams
+        )
+        insertlogline(
+            redis_client,
+            f"Run (Get) query: ran query={q} successfully",
+        )
+        return JSONResponse(content={"query": response["query"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during run_query_get: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Run (Get) query: query {q} ran unsuccessfully",
+            )
+            return JSONResponse(
+                content={"query": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during run_query_get: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during run_query_get"
+            )
+
+
+@router.post("/run")
+async def run_query_post(
+    request: Request,
+    q: str = Query(...),
+    fetch: Optional[int] = Query(None),
+    offset: Optional[int] = Query(None),
+    queryparams: Optional[str] = Query(None),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside run_query_post")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        url_base = request.app.state.url_base
+        response = await run_query_post_ehrbase(
+            request, auth, url_base, q, fetch, offset, queryparams
+        )
+        insertlogline(
+            redis_client,
+            f"Run (Post) query: ran query={q} successfully",
+        )
+        return JSONResponse(content={"query": response["query"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during run_query_post: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Run (Post) query: query {q} ran unsuccessfully",
+            )
+            return JSONResponse(
+                content={"query": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during run_query_post: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during run_query_post"
+            )

@@ -131,7 +131,7 @@
                         :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
                         class="form-check-input" />
                       <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                      }}</label>
+                        }}</label>
                     </div>
                   </div>
 
@@ -223,7 +223,7 @@
                         :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
                         class="form-check-input" />
                       <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                      }}</label>
+                        }}</label>
                     </div>
                   </div>
 
@@ -294,7 +294,7 @@
                         :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
                         class="form-check-input" />
                       <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                        }}</label>
+                      }}</label>
                     </div>
                   </div>
 
@@ -804,6 +804,66 @@ export default defineComponent({
           this.results = `Error: ${error.message}`;
         }
       }
+      else if (action == 'submit_query_run_stored') //run stored query
+      {
+        this.resultsOK = false;
+        const queryname = this.currentParams.find(p => p.label === 'Qualified Query Name')?.value;
+        console.log('queryname', queryname);
+        if (!queryname) {
+          this.results = 'A Qualified Query Name is required';
+          return;
+        }
+        const queryversion = this.currentParams.find(p => p.label === 'Version')?.value;
+        console.log('queryversion', queryversion);
+        if (!queryversion) {
+          this.results = 'A Version is required';
+          return;
+        }
+
+        if (this.aql === '' || !this.aql.toLowerCase().includes('select') || !this.aql.toLowerCase().includes('from')) {
+          this.results = 'A valid AQL Query is required';
+          return;
+        }
+        const fetch = this.currentParams.find(p => p.label === 'Fetch (Optional)')?.value;
+        const offset = this.currentParams.find(p => p.label === 'Offset (Optional)')?.value;
+        const queryparams = this.currentParams.find(p => p.label === 'Query Parameters (Optional)')?.value;
+        const querymethod = this.currentRadioParams.find(p => p.label === 'Query Method')?.selected;
+        try {
+          const queryResults = await this.runstoredquery(queryname, queryversion, fetch, offset, queryparams, querymethod)
+          console.log('results', queryResults);
+          this.resultsOK = true;
+          this.resultsName = 'results.json';
+          this.results = JSON.stringify(queryResults, null, 2);
+        }
+        catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
+        }
+      }
+      else if (action == 'submit_query_run') //run query
+      {
+        this.resultsOK = false;
+
+        if (this.aql === '' || !this.aql.toLowerCase().includes('select') || !this.aql.toLowerCase().includes('from')) {
+          this.results = 'A valid AQL Query is required';
+          return;
+        }
+        const fetch = this.currentParams.find(p => p.label === 'Fetch (Optional)')?.value;
+        const offset = this.currentParams.find(p => p.label === 'Offset (Optional)')?.value;
+        const queryparams = this.currentParams.find(p => p.label === 'Query Parameters (Optional)')?.value;
+        const querymethod = this.currentRadioParams.find(p => p.label === 'Query Method')?.selected;
+        try {
+          const queryResults = await this.runquery(this.aql, fetch, offset, queryparams, querymethod)
+          console.log('results', queryResults);
+          this.resultsOK = true;
+          this.resultsName = 'results.json';
+          this.results = JSON.stringify(queryResults, null, 2);
+        }
+        catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
+        }
+      }
 
 
 
@@ -1275,9 +1335,142 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
+    async runstoredquery(queryname, version, fetch, offset, queryparams, querymethod) {
+      console.log('inside runstoredquery');
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      const params = {};
+      params.queryname = queryname;
+      params.version = version;
+      if (fetch) {
+        params.fetch = fetch;
+      }
+      if (offset) {
+        params.offset = offset;
+      }
+      if (queryparams) {
+        params.queryparams = queryparams;
+      }
 
+      console.log('queryname', queryname);
+      console.log('queryversion', version);
+      console.log('fetch', fetch);
+      console.log('offset', offset);
+      console.log('queryparams', queryparams);
+      console.log('querymethod', querymethod);
+      try {
+        if (querymethod === 'Get') {
+          const response = await axios.get('http://127.0.0.1:5000/query/runstored',
+            {
+              headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
+              params: params,
+              timeout: 2000000
+            });
+          this.isLoading = false;
+          return response.data.query;
+        }
+        else if (querymethod === 'Post') {
+          const response = await axios.post(`http://127.0.0.1:5000/query/runstored`,
+            {},
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+              },
+              params: params,
+              timeout: 2000000,
+            },
+          );
+          this.isLoading = false;
+          return response.data.query;
+        }
+      }
+      catch (error) {
+        console.error("Error in runstoredquery:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
 
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async runquery(q, fetch, offset, queryparams, querymethod) {
+      console.log('inside runquery');
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      const params = {};
+      params.q = q;
+      if (fetch) {
+        params.fetch = fetch;
+      }
+      if (offset) {
+        params.offset = offset;
+      }
+      if (queryparams) {
+        params.queryparams = queryparams;
+      }
 
+      console.log('q', q);
+      console.log('fetch', fetch);
+      console.log('offset', offset);
+      console.log('queryparams', queryparams);
+      console.log('querymethod', querymethod);
+      try {
+        if (querymethod === 'Get') {
+          const response = await axios.get('http://127.0.0.1:5000/query/run',
+            {
+              headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
+              params: params,
+              timeout: 2000000
+            });
+          this.isLoading = false;
+          return response.data.query;
+        }
+        else if (querymethod === 'Post') {
+          const response = await axios.post(`http://127.0.0.1:5000/query/run`,
+            {},
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+              },
+              params: params,
+              timeout: 2000000,
+            },
+          );
+          this.isLoading = false;
+          return response.data.query;
+        }
+      }
+      catch (error) {
+        console.error("Error in runquery:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
 
 
@@ -1617,6 +1810,11 @@ h1 {
   margin-bottom: 10px;
 }
 
+.form-textarea2 {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
 /* 
 .big-textarea {
   font-size: 30px;
@@ -1631,6 +1829,12 @@ h1 {
 .form-aqltext textarea {
   margin-top: 0px;
 }
+
+.form-aqltext textarea2 {
+  margin-top: 0px;
+  margin-bottom: 20px;
+}
+
 
 .form-group-sidebyside {
   display: flex;

@@ -1,12 +1,12 @@
 from fastapi import HTTPException
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, RootModel
 
 
-class AQLVersion(BaseModel):
-    version: str
+class AQLVersion(RootModel[str]):
+    root: str
 
-    @field_validator("version")
+    @field_validator("root")
     @classmethod
     def validate_version_format(cls, v):
         parts = v.split(".")
