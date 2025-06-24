@@ -26,6 +26,7 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { BACKEND_HOST } from '@/config';
 
 export default {
   name: 'LoginPage',
@@ -35,12 +36,14 @@ export default {
     const url = ref('');
     const errorMessage = ref('');
     const router = useRouter();
+    console.log('LoginPage component initialized');
+    console.log('BACKEND_HOST:', `${BACKEND_HOST}`);
 
     const handleLogin = async () => {
       errorMessage.value = ''; // Reset error message
 
       try {
-        const response = await axios.post('http://localhost:5000/auth/login', {
+        const response = await axios.post(`http://${BACKEND_HOST}/auth/login`, {
           username: username.value,
           password: password.value,
           url: url.value,
@@ -125,4 +128,3 @@ button:hover {
   margin-top: 1rem;
 }
 </style>
-

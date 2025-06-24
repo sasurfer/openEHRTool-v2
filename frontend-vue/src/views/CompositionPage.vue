@@ -188,6 +188,7 @@ import AQLInfoModal from '@/components/AQLInfoModal.vue';
 import { defineComponent } from "vue";
 import axios from 'axios';  // Import axios for making HTTP requests
 import Circle4Spinner from '@/components/ui/Circle4Spinner.vue';
+import { BACKEND_HOST } from '@/config';
 
 
 
@@ -900,7 +901,7 @@ export default defineComponent({
     async fetchEHRdata() {
       try {
         this.isLoadingEHR = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/ehrs',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/ehrs`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -947,7 +948,7 @@ export default defineComponent({
     async fetchTemplateData() {
       try {
         this.isLoadingTemplate = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/templates',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/templates`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1009,7 +1010,7 @@ export default defineComponent({
     async fetchCompositionData() {
       try {
         this.isLoadingComposition = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/compositions',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/compositions`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1056,7 +1057,7 @@ export default defineComponent({
       // Fetch AQL data here
       try {
         this.isLoadingAQL = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/queries',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/queries`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1132,7 +1133,7 @@ export default defineComponent({
         console.log('fetchTemplateNames called');
         this.isLoadingTemplateNames = true;
         this.templateNames = [];
-        const response = await axios.get('http://127.0.0.1:5000/template/templates',
+        const response = await axios.get(`http://${BACKEND_HOST}/template/templates`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         this.isLoadingTemplateNames = false;
@@ -1195,7 +1196,7 @@ export default defineComponent({
         console.log('jsonString is', compString);
       }
       try {
-        const response = await axios.post(`http://127.0.0.1:5000/composition`,
+        const response = await axios.post(`http://${BACKEND_HOST}/composition`,
           { "composition": compString },
           {
             headers: {
@@ -1243,7 +1244,7 @@ export default defineComponent({
         console.log('jsonString is', compString);
       }
       try {
-        const response = await axios.put(`http://127.0.0.1:5000/composition/${compid}`,
+        const response = await axios.put(`http://${BACKEND_HOST}/composition/${compid}`,
           { "composition": compString },
           {
             headers: {
@@ -1281,7 +1282,7 @@ export default defineComponent({
       this.isLoading = true;
       this.resultsOK = false;
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/composition/${compid}`,
+        const response = await axios.get(`http://${BACKEND_HOST}/composition/${compid}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1318,7 +1319,7 @@ export default defineComponent({
       this.isLoading = true;
       this.resultsOK = false;
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/composition/versioned/${compid}`,
+        const response = await axios.get(`http://${BACKEND_HOST}/composition/versioned/${compid}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1355,7 +1356,7 @@ export default defineComponent({
       this.isLoading = true;
       this.resultsOK = false;
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/composition/versioned/${compid}`,
+        const response = await axios.get(`http://${BACKEND_HOST}/composition/versioned/${compid}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1392,7 +1393,7 @@ export default defineComponent({
       this.isLoading = true;
       this.resultsOK = false;
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/composition/versioned/${compid}`,
+        const response = await axios.get(`http://${BACKEND_HOST}/composition/versioned/${compid}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1429,7 +1430,7 @@ export default defineComponent({
       this.isLoading = true;
       this.resultsOK = false;
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/composition/versioned/${compid}`,
+        const response = await axios.get(`http://${BACKEND_HOST}/composition/versioned/${compid}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1466,7 +1467,7 @@ export default defineComponent({
       this.isLoading = true;
       this.resultsOK = false;
       try {
-        const response = await axios.delete(`http://127.0.0.1:5000/composition/${compvid}`,
+        const response = await axios.delete(`http://${BACKEND_HOST}/composition/${compvid}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1502,7 +1503,7 @@ export default defineComponent({
       this.isLoading = true;
       this.resultsOK = false;
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/composition/example`,
+        const response = await axios.get(`http://${BACKEND_HOST}/composition/example`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1557,7 +1558,7 @@ export default defineComponent({
         params.method = 'sameehrid';
         params.onthefly = onthefly;
         console.log('params are', params);
-        const response = await axios.post(`http://127.0.0.1:5000/composition/batch`,
+        const response = await axios.post(`http://${BACKEND_HOST}/composition/batch`,
           { "compositions": compStrings },
           {
             headers: {
@@ -1605,7 +1606,7 @@ export default defineComponent({
         params.method = 'differentehrid';
         params.onthefly = onthefly;
         console.log('params are', params);
-        const response = await axios.post(`http://127.0.0.1:5000/composition/batch`,
+        const response = await axios.post(`http://${BACKEND_HOST}/composition/batch`,
           { "compositions": compStrings },
           {
             headers: {

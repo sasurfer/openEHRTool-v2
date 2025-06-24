@@ -169,6 +169,7 @@ import AQLInfoModal from '@/components/AQLInfoModal.vue';
 import { defineComponent } from "vue";
 import axios from 'axios';  // Import axios for making HTTP requests
 import Circle4Spinner from '@/components/ui/Circle4Spinner.vue';
+import { BACKEND_HOST } from '@/config';
 
 
 
@@ -977,7 +978,7 @@ export default defineComponent({
     async fetchEHRdata() {
       try {
         this.isLoadingEHR = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/ehrs',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/ehrs`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1024,7 +1025,7 @@ export default defineComponent({
     async fetchTemplateData() {
       try {
         this.isLoadingTemplate = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/templates',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/templates`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1086,7 +1087,7 @@ export default defineComponent({
     async fetchCompositionData() {
       try {
         this.isLoadingComposition = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/compositions',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/compositions`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1133,7 +1134,7 @@ export default defineComponent({
       // Fetch AQL data here
       try {
         this.isLoadingAQL = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/queries',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/queries`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1211,7 +1212,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1249,7 +1250,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1285,7 +1286,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before post')
-        const response = await axios.post(`http://127.0.0.1:5000/ehr/${ehrid}`,
+        const response = await axios.post(`http://${BACKEND_HOST}/ehr/${ehrid}`,
           {},
           {
             headers: {
@@ -1322,7 +1323,7 @@ export default defineComponent({
       try {
         console.log('before post')
         if (ehrid) {
-          const response = await axios.post(`http://127.0.0.1:5000/ehr/${ehrid}/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
+          const response = await axios.post(`http://${BACKEND_HOST}/ehr/${ehrid}/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
             {},
             {
               headers: {
@@ -1332,7 +1333,7 @@ export default defineComponent({
             });
           return response.data.ehr;
         } else {
-          const response = await axios.post(`http://127.0.0.1:5000/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
+          const response = await axios.post(`http://${BACKEND_HOST}/ehr/subjectid/${subjectid}/subjectnamespace/${subjectnamespace}`,
             {},
             {
               headers: {
@@ -1375,7 +1376,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before post');
-        const response = await axios.post(`http://127.0.0.1:5000/ehr/ehrstatus`,
+        const response = await axios.post(`http://${BACKEND_HOST}/ehr/ehrstatus`,
           { "ehrstatus": ehrstatusstring },
           {
             headers: {
@@ -1415,7 +1416,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before post');
-        const response = await axios.put(`http://127.0.0.1:5000/ehr/ehrstatus`,
+        const response = await axios.put(`http://${BACKEND_HOST}/ehr/ehrstatus`,
           { "ehrstatus": ehrstatusstring, "ehrid": ehrid, "ehrstatusVersionedId": ehrstatusversionedid },
           {
             headers: {
@@ -1452,7 +1453,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/ehrstatus`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}/ehrstatus`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1492,7 +1493,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/ehrstatus`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}/ehrstatus`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1532,7 +1533,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/vehrstatus`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}/vehrstatus`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1572,7 +1573,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/vehrstatus`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}/vehrstatus`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1612,7 +1613,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/vehrstatus`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}/vehrstatus`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1652,7 +1653,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/vehrstatus`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}/vehrstatus`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1693,7 +1694,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before post');
-        const response = await axios.post(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+        const response = await axios.post(`http://${BACKEND_HOST}/ehr/${ehrid}/directory`,
           { "directory": folderstring },
           {
             headers: {
@@ -1730,7 +1731,7 @@ export default defineComponent({
       const folderstring = JSON.stringify(folder);
       // await this.sleep(5000);
       try {
-        const response = await axios.put(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+        const response = await axios.put(`http://${BACKEND_HOST}/ehr/${ehrid}/directory`,
           { "directory": folderstring, "directoryVersionedId": foldervid },
           {
             headers: {
@@ -1767,7 +1768,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}/directory`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1809,7 +1810,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.get(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+        const response = await axios.get(`http://${BACKEND_HOST}/ehr/${ehrid}/directory`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
@@ -1851,7 +1852,7 @@ export default defineComponent({
       // await this.sleep(5000);
       try {
         console.log('before get')
-        const response = await axios.delete(`http://127.0.0.1:5000/ehr/${ehrid}/directory`,
+        const response = await axios.delete(`http://${BACKEND_HOST}/ehr/${ehrid}/directory`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`

@@ -2,16 +2,16 @@
   <div id="app">
     <!-- You can have a global navbar, footer, or other common layout elements here -->
     <Sidebar @open-user-info="openUserInfo" />
-    <rsidebar  @open-ehr-info="openEHRInfo" @open-template-info="openTemplateInfo"
-      @open-composition-info="openCompositionInfo" @open-aql-info="openAQLInfo" >
-  </rsidebar>
+    <rsidebar @open-ehr-info="openEHRInfo" @open-template-info="openTemplateInfo"
+      @open-composition-info="openCompositionInfo" @open-aql-info="openAQLInfo">
+    </rsidebar>
     <UserInfoModal v-if="isUserInfoVisible" :isVisible="isUserInfoVisible" :user="user" @close-modal="closeModal"
       @logout="logout" />
     <div class="main-content">
       <!-- Your main content goes here -->
       <h1>Dashboard</h1>
       <div v-if="isLoadingDashboard" class="flex justify-center items-center dashboard-spinner">
-        <RotateSquare2  :size="'100px'" :background="'#ff5733'"></RotateSquare2>
+        <RotateSquare2 :size="'100px'" :background="'#ff5733'"></RotateSquare2>
       </div>
       <div class='gridt grid-cols-6 gap-6 p-6'>
         <!-- Info Panel -->
@@ -77,14 +77,12 @@
     <EHRInfoModal v-if="isEHRInfoVisible" :isVisible="isEHRInfoVisible" :ehrData="ehrData"
       @close-ehr-modal="closeEHRInfo" :isLoading="isLoadingEHR" />
     <TemplateInfoModal v-if="isTemplateInfoVisible" :isVisible="isTemplateInfoVisible" :templateData="templateData"
-      @close-template-modal="closeTemplateInfo" 
-      :isLoading="isLoadingTemplate" />
+      @close-template-modal="closeTemplateInfo" :isLoading="isLoadingTemplate" />
     <CompositionInfoModal v-if="isCompositionInfoVisible" :isVisible="isCompositionInfoVisible"
-      :compositionData="compositionData" @close-composition-modal="closeCompositionInfo" 
+      :compositionData="compositionData" @close-composition-modal="closeCompositionInfo"
       :isLoading="isLoadingComposition" />
     <AQLInfoModal v-if="isAQLInfoVisible" :isVisible="isAQLInfoVisible" :aqlData="aqlData"
-      @close-aql-modal="closeAQLInfo" 
-      :isLoading="isLoadingAQL" />
+      @close-aql-modal="closeAQLInfo" :isLoading="isLoadingAQL" />
   </div>
 </template>
 
@@ -103,7 +101,9 @@ import MyCardComponent from "@/components/ui/MyCardComponent";
 import CardContent from "@/components/ui/CardContent";
 import MyBarChart from '@/components/MyBarChart.vue'; // Import the chart compone
 import MyPieChart from '@/components/MyPieChart.vue'; // Import the PieChart component
-import  RotateSquare2  from '@/components/ui/RotateSquare2.vue'; // Import the RotateSquare2 component
+import RotateSquare2 from '@/components/ui/RotateSquare2.vue'; // Import the RotateSquare2 
+import { BACKEND_HOST } from '@/config';
+// component
 
 
 export default defineComponent({
@@ -211,9 +211,9 @@ export default defineComponent({
   methods: {
     async fetchDashboardData() {
       try {
-        this.isLoadingDashboard = true; 
+        this.isLoadingDashboard = true;
         // Replace with your Flask API endpoint
-        const response = await axios.get('http://127.0.0.1:5000/dashboard',
+        const response = await axios.get(`http://${BACKEND_HOST}/dashboard`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 }); // Adjust the URL to your Flask API
         if (response.status === 401) {
@@ -283,9 +283,9 @@ export default defineComponent({
       try {
         this.isLoadingEHR = true;
         // await this.sleep(5000);
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/ehrs',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/ehrs`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 }); 
+          { timeout: 2000000 });
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -332,9 +332,9 @@ export default defineComponent({
       try {
         this.isLoadingTemplate = true;
         // await this.sleep(20000);
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/templates',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/templates`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 }); 
+          { timeout: 2000000 });
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -348,7 +348,7 @@ export default defineComponent({
         console.log(response)
         const templateData = response.data.templates;
         this.templateData = templateData;
-        console.log('this.templateData', this.templateData); 
+        console.log('this.templateData', this.templateData);
       } catch (error) {
         console.error("Error fetching templates:", error);
         if (error?.response?.status) {
@@ -389,15 +389,15 @@ export default defineComponent({
     toggleCompositionInfoModal() {
       this.isCompositionInfoVisible = !this.isCompositionInfoVisible;
     },
-    
-      // Fetch composition data here
+
+    // Fetch composition data here
     async fetchCompositionData() {
       try {
         this.isLoadingComposition = true;
         // await this.sleep(20000);
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/compositions',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/compositions`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 }); 
+          { timeout: 2000000 });
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -410,7 +410,7 @@ export default defineComponent({
         console.log(response)
         const compositionData = response.data.compositions;
         this.compositionData = compositionData;
-        console.log('this.compositionData', this.compositionData); 
+        console.log('this.compositionData', this.compositionData);
       } catch (error) {
         console.error("Error fetching compositions:", error);
         if (error?.response?.status) {
@@ -420,11 +420,11 @@ export default defineComponent({
             return
           }
         }
-      }  
+      }
       finally {
         this.isLoadingComposition = false;
-      }    
-//      this.compositionData = ['composition1', 'composition2', 'composition3', 'composition4', 'composition5', 'composition6', 'composition7', 'composition8', 'composition9', 'composition10'];
+      }
+      //      this.compositionData = ['composition1', 'composition2', 'composition3', 'composition4', 'composition5', 'composition6', 'composition7', 'composition8', 'composition9', 'composition10'];
       return this.compositionData;
     },
     async openCompositionInfo() {
@@ -444,9 +444,9 @@ export default defineComponent({
       try {
         this.isLoadingAQL = true;
         // await this.sleep(20000);
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/queries',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/queries`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
-          { timeout: 2000000 }); 
+          { timeout: 2000000 });
         if (response.status === 401) {
           console.error("Unauthorized access. Please login again.");
           this.logout();
@@ -458,7 +458,7 @@ export default defineComponent({
         }
         const aqlData = response.data.queries;
         this.aqlData = aqlData;
-        console.log('this.aqlData', this.aqlData); 
+        console.log('this.aqlData', this.aqlData);
       } catch (error) {
         console.error("Error fetching queries:", error);
         if (error?.response?.status) {
@@ -468,10 +468,10 @@ export default defineComponent({
             return
           }
         }
-      }     
+      }
       finally {
         this.isLoadingAQL = false;
-      } 
+      }
       // this.aqlData = [{ 'name': 'org.ehrbase.local:aql1', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
       // { 'name': 'org.ehrbase.local:aql2', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
       // { 'name': 'org.ehrbase.local:aql3', 'version': '1.0.0', 'saved': '2025-01-08T12:25:24.138234Z' },
@@ -783,5 +783,4 @@ gridt {
   transform: translate(-50%, -50%);
   z-index: 20;
 }
-
 </style>

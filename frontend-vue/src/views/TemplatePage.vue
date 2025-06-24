@@ -178,6 +178,7 @@ import AQLInfoModal from '@/components/AQLInfoModal.vue';
 import { defineComponent } from "vue";
 import axios from 'axios';  // Import axios for making HTTP requests
 import Circle4Spinner from '@/components/ui/Circle4Spinner.vue';
+import { BACKEND_HOST } from '@/config';
 
 
 
@@ -514,7 +515,7 @@ export default defineComponent({
         console.log('fetchTemplateNames called');
         this.isLoadingTemplateNames = true;
         this.templateNames = [];
-        const response = await axios.get('http://127.0.0.1:5000/template/templates',
+        const response = await axios.get(`http://${BACKEND_HOST}/template/templates`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         this.isLoadingTemplateNames = false;
@@ -556,7 +557,7 @@ export default defineComponent({
     async fetchEHRdata() {
       try {
         this.isLoadingEHR = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/ehrs',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/ehrs`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -603,7 +604,7 @@ export default defineComponent({
     async fetchTemplateData() {
       try {
         this.isLoadingTemplate = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/templates',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/templates`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -655,7 +656,7 @@ export default defineComponent({
     async fetchCompositionData() {
       try {
         this.isLoadingComposition = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/compositions',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/compositions`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -702,7 +703,7 @@ export default defineComponent({
       // Fetch AQL data here
       try {
         this.isLoadingAQL = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/queries',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/queries`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -781,7 +782,7 @@ export default defineComponent({
         this.resultsOK = false;
         console.log('templateid is', templateid);
         console.log('format is', format);
-        const response = await axios.get('http://127.0.0.1:5000/template/',
+        const response = await axios.get(`http://${BACKEND_HOST}/template/`,
           {
             headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
             params: {
@@ -827,7 +828,7 @@ export default defineComponent({
       console.log('templateString=', templateString);
       // await this.sleep(5000);
       try {
-        const response = await axios.post(`http://127.0.0.1:5000/template/`,
+        const response = await axios.post(`http://${BACKEND_HOST}/template/`,
           { "template": templateString },
           {
             headers: {

@@ -373,6 +373,7 @@ import AQLInfoModal from '@/components/AQLInfoModal.vue';
 import { defineComponent } from "vue";
 import axios from 'axios';  // Import axios for making HTTP requests
 import Circle4Spinner from '@/components/ui/Circle4Spinner.vue';
+import { BACKEND_HOST } from '@/config';
 
 
 
@@ -898,7 +899,7 @@ export default defineComponent({
         console.log('fetchQueryNames called');
         this.isLoadingQueryNames = true;
         this.queryNames = [];
-        const response = await axios.get('http://127.0.0.1:5000/query/query',
+        const response = await axios.get(`http://${BACKEND_HOST}/query/query`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         this.isLoadingQueryNames = false;
@@ -949,7 +950,7 @@ export default defineComponent({
     async fetchEHRdata() {
       try {
         this.isLoadingEHR = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/ehrs',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/ehrs`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -996,7 +997,7 @@ export default defineComponent({
     async fetchTemplateData() {
       try {
         this.isLoadingTemplate = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/templates',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/templates`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1048,7 +1049,7 @@ export default defineComponent({
     async fetchCompositionData() {
       try {
         this.isLoadingComposition = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/compositions',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/compositions`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1095,7 +1096,7 @@ export default defineComponent({
       // Fetch AQL data here
       try {
         this.isLoadingAQL = true;
-        const response = await axios.get('http://127.0.0.1:5000/rsidebar/queries',
+        const response = await axios.get(`http://${BACKEND_HOST}/rsidebar/queries`,
           { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
           { timeout: 2000000 });
         if (response.status === 401) {
@@ -1169,7 +1170,7 @@ export default defineComponent({
         console.log('getqueryversions called');
         this.isLoading = true;
         this.resultsOK = false;
-        const response = await axios.get('http://127.0.0.1:5000/query/',
+        const response = await axios.get(`http://${BACKEND_HOST}/query/`,
           {
             headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
             params: {
@@ -1209,7 +1210,7 @@ export default defineComponent({
         console.log('getquerybynameandversion called');
         this.isLoading = true;
         this.resultsOK = false;
-        const response = await axios.get('http://127.0.0.1:5000/query/',
+        const response = await axios.get(`http://${BACKEND_HOST}/query/`,
           {
             headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
             params: {
@@ -1256,7 +1257,7 @@ export default defineComponent({
         }
         console.log('fetchQuery called');
 
-        const response = await axios.get('http://127.0.0.1:5000/query/',
+        const response = await axios.get(`http://${BACKEND_HOST}/query/`,
           {
             headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
             params: {
@@ -1299,7 +1300,7 @@ export default defineComponent({
       console.log('queryname', queryname);
       console.log('queryversion', queryversion);
       try {
-        const response = await axios.put(`http://127.0.0.1:5000/query/`,
+        const response = await axios.put(`http://${BACKEND_HOST}/query/`,
           {},
           {
             headers: {
@@ -1362,7 +1363,7 @@ export default defineComponent({
       console.log('querymethod', querymethod);
       try {
         if (querymethod === 'Get') {
-          const response = await axios.get('http://127.0.0.1:5000/query/runstored',
+          const response = await axios.get(`http://${BACKEND_HOST}/query/runstored`,
             {
               headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
               params: params,
@@ -1372,7 +1373,7 @@ export default defineComponent({
           return response.data.query;
         }
         else if (querymethod === 'Post') {
-          const response = await axios.post(`http://127.0.0.1:5000/query/runstored`,
+          const response = await axios.post(`http://${BACKEND_HOST}/query/runstored`,
             {},
             {
               headers: {
@@ -1429,7 +1430,7 @@ export default defineComponent({
       console.log('querymethod', querymethod);
       try {
         if (querymethod === 'Get') {
-          const response = await axios.get('http://127.0.0.1:5000/query/run',
+          const response = await axios.get(`http://${BACKEND_HOST}/query/run`,
             {
               headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
               params: params,
@@ -1439,7 +1440,7 @@ export default defineComponent({
           return response.data.query;
         }
         else if (querymethod === 'Post') {
-          const response = await axios.post(`http://127.0.0.1:5000/query/run`,
+          const response = await axios.post(`http://${BACKEND_HOST}/query/run`,
             {},
             {
               headers: {
