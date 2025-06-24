@@ -9,13 +9,6 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class formatEnum(str, Enum):
-    json = "json"
-    xml = "xml"
-    flat = "flat"
-    structured = "structured"
-
-
 class templateFormatEnum(str, Enum):
     webtemplate = "webtemplate"
     opt = "opt"
