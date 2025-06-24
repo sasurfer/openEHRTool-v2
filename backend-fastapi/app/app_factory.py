@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.config import Config
+from app.config import Config, get_config
 from app.backend_redis.myredis import create_redis_client
 from fastapi.middleware.cors import CORSMiddleware
 import logging
@@ -44,9 +44,20 @@ def create_app():
     app.state.logger = logger
     logger.debug("created app and added logger")
 
+    # Add configuration to FastAPI's state
+    # nodename, hostname, port, redishostname, redisport = get_config()
+    nodename, redishostname, redisport = get_config()
+    app.state.nodename = nodename
+    # app.state.hostname = hostname
+    # app.state.port = port
+    app.state.redishostname = redishostname
+    app.state.redisport = redisport
+
     # Add Redis client to FastAPI's state
     app.state.secret_key = Config.SECRET_KEY
-    app.state.redis_client = create_redis_client()
+    app.state.redis_client = create_redis_client(
+        app.state.redishostname, app.state.redisport
+    )
 
     # Load routes
     app.include_router(auth_router, prefix="/auth", tags=["auth"])
