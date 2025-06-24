@@ -1,0 +1,61 @@
+services:
+  traefik:
+    image: traefik:v3.0  
+    ports:
+      - "80:80"           
+      - "9090:8080"       #traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - traefik-net      
+
+  frontend:
+    build: 
+      context: ./frontend-vue
+      dockerfile: Dockerfile
+      args:
+        - VUE_APP_BACKEND_HOSTNAME=backend.localhost
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    # ports: 
+    #   - 8880:8180
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - traefik-net
+
+  backend:
+    build:
+      context: ./backend-fastapi
+      dockerfile: Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`backend.localhost`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=5000"
+    environment:
+      - REDISSERVER_hostname=redis
+      - EHRBASESERVER_hostname=host.docker.internal
+    # ports:
+    #   - 5000:5000
+    depends_on:
+      - redis     
+    networks:
+      - traefik-net         
+
+  redis:
+    image: redis:7-alpine
+    command:  redis-server  /redis/redis.conf
+    # ports:
+    # - 6379:6379
+    volumes:
+    - ./redis:/redis
+    networks:
+      - traefik-net
+  
+networks:
+  traefik-net:
+    driver: bridge
