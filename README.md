@@ -160,6 +160,18 @@ In frontend-vue/src/config.js the default for the backend is set. Usually you do
 ## Backend
 In app/configuration/openehrtool.cfg are defined the redis hostname and port and the EHRBase nodename. Usually you don't have to change them.
 
+# Screenshots
+![Login](./screenshots/Login.png?raw=true "Login")
+![Dashboard/Homepage](./screenshots/Dashboard.png?raw=true "Dashboard/Homepage")
+![EHR Methods](./screenshots/EHRMethods.png?raw=true "EHR Methods")
+![Template Methods](./screenshots/TemplateMethods.png?raw=true "Template Methods")
+![Composition Methods](./screenshots/CompositionMethods.png?raw=true "Post a Composition")
+![Query Methods](./screenshots/QueryMethods.png?raw=true "Query Methods")
+<!-- ![Form Methods](./screenshots/FormMethods.png?raw=true "Form Methods")
+![Admin Methods](./screenshots/AdminMethods.png?raw=true "Admin Methods")
+![Contribution Methods](./screenshots/ContributionMethods.png?raw=true "Contribution Methods") -->
+![Data Windows](./screenshots/DataWindows.png?raw=true "Data Windows")
+<!-- ![sessionlog](/../screenshots/screenshots/sessionlog.png?raw=true "Session Activities") -->
 
 
 # Acknowledgments
