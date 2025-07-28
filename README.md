@@ -40,7 +40,10 @@ password:  SuperSecretPassword
 server url: http://ehrbase:8080/ehrbase/
 ```
 
-_Note_: The compose-total file adopts EHRBase version 2.15.0 . That is the latest version of EHRBase tested with the tool. 
+**Note**: The compose-total file adopts EHRBase version 2.15.0 . That is the latest version of EHRBase tested with the tool. 
+
+**Note**2: If you have port 80 already in use by another program, e.g., you want to run aqlbetter https://github.com/crs4/aqlbetter-dockerized, then use compose-total-port8088.yml instead of compose-total.yml and optionally replace 8088 with the port of your choice. Remember to rebuild the images.
+
 
 ### &#x1F335; Docker "Separated" &#x1F335;
 EHRBase is run in a network/docker-compose separated from openEHRTool.
@@ -85,6 +88,9 @@ username:  ehrbase-user
 password:  SuperSecretPassword
 server url: http://172.17.0.1:8080/ehrbase/
 ```
+
+**Note**: If you have port 80 already in use by another program, e.g., you want to run aqlbetter https://github.com/crs4/aqlbetter-dockerized, then use compose-port8088.yml instead of compose.yml and optionally replace 8088 with the port of your choice. Remember to rebuild the images.
+
 ## &#x1F335; Installing and running locally&#x1F335;
 
 ### Frontend

@@ -2,7 +2,7 @@ services:
   traefik:
     image: traefik:v3.0  
     ports:
-      - "80:80"           
+      - "8088:80"           
       - "9090:8080"       #traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -15,7 +15,7 @@ services:
       context: ./frontend-vue
       dockerfile: Dockerfile
       args:
-        - VUE_APP_BACKEND_HOSTNAME=backend.localhost
+        - VUE_APP_BACKEND_HOSTNAME=backend.localhost:8088
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
@@ -55,52 +55,7 @@ services:
     - ./redis:/redis
     networks:
       - traefik-net
-
-  ehrbase:
-    image: ${EHRBASE_IMAGE:-ehrbase/ehrbase:2.15.0}
-    env_file:
-      - .env.ehrbase
-    environment:
-      DB_URL: jdbc:postgresql://ehrdb:5432/ehrbase
-      DB_USER_ADMIN: ehrbase
-      DB_PASS_ADMIN: ehrbase
-      DB_USER: ehrbase_restricted
-      DB_PASS: ehrbase_restricted
-    links:
-      - ehrdb
-        #      - keycloak
-    depends_on:
-      ehrdb:
-        condition: service_healthy
-        #    keycloak:
-        #        condition: service_started
-    ports:
-      - "8080:8080"
-    networks:
-      - traefik-net
-
-  ehrdb:
-    image: ${EHRBASE_POSTGRES_IMAGE:-ehrbase/ehrbase-v2-postgres:16.2}
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      EHRBASE_USER_ADMIN: ehrbase
-      EHRBASE_PASSWORD_ADMIN: ehrbase
-      EHRBASE_USER: ehrbase_restricted
-      EHRBASE_PASSWORD: ehrbase_restricted
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-    # ports:
-    #   - "5432:5432"
-    networks:
-      - traefik-net
-    volumes:
-      - ./.pgdata:/var/lib/postgresql/data    
-
-
+  
 networks:
   traefik-net:
     driver: bridge

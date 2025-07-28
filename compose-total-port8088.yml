@@ -2,7 +2,7 @@ services:
   traefik:
     image: traefik:v3.0  
     ports:
-      - "80:80"           
+      - "8088:80"           
       - "9090:8080"       #traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -15,7 +15,7 @@ services:
       context: ./frontend-vue
       dockerfile: Dockerfile
       args:
-        - VUE_APP_BACKEND_HOSTNAME=backend.localhost
+              - VUE_APP_BACKEND_HOSTNAME=backend.localhost:8088
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
