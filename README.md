@@ -37,7 +37,7 @@ For instance, recalling the default user in EHRBase:
 ```
 username:  ehrbase-user
 password:  SuperSecretPassword
-server url: http://ehrbase:8080/erhbase/
+server url: http://ehrbase:8080/ehrbase/
 ```
 
 _Note_: The compose-total file adopts EHRBase version 2.15.0 . That is the latest version of EHRBase tested with the tool. 
@@ -83,7 +83,7 @@ For instance, recalling the default user in EHRBase:
 ```
 username:  ehrbase-user
 password:  SuperSecretPassword
-server url: http://172.17.0.1:8080/erhbase/
+server url: http://172.17.0.1:8080/ehrbase/
 ```
 ## &#x1F335; Installing and running locally&#x1F335;
 

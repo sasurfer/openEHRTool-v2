@@ -1,9 +1,10 @@
 # Stage 1: Build
 FROM node:18-alpine AS build-stage
 
+RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci 
 
 ARG VUE_APP_BACKEND_HOSTNAME
 ENV VUE_APP_BACKEND_HOSTNAME=$VUE_APP_BACKEND_HOSTNAME
