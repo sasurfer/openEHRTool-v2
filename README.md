@@ -42,7 +42,15 @@ server url: http://ehrbase:8080/ehrbase/
 
 **Note**: The compose-total file adopts EHRBase version 2.15.0 . That is the latest version of EHRBase tested with the tool. 
 
-**Note**2: If you have port 80 already in use by another program, e.g., you want to run aqlbetter https://github.com/crs4/aqlbetter-dockerized, then use compose-total-port8088.yml instead of compose-total.yml and optionally replace 8088 with the port of your choice. Remember to rebuild the images and then access the frontend at http://frontend.localhost:8088 or if you choose another port replace 8088 with your port.
+**Note**2: If you have port 80 already in use by another program, e.g., you want to run aqlbetter https://github.com/crs4/aqlbetter-dockerized, then use compose-total-port8088.yml instead of compose-total.yml and optionally replace 8088 with the port of your choice. Start by removing the old frontend image:
+```
+docker image rm openehrtool-v2-frontend:latest
+```
+and then rebuild it:
+```
+docker compose -f compose-total-port8088.yml up -d
+```
+and then access the frontend at http://frontend.localhost:8088 (replace 8088 with your chosen port if different).
 
 
 ### &#x1F335; Docker "Separated" &#x1F335;
@@ -89,7 +97,15 @@ password:  SuperSecretPassword
 server url: http://172.17.0.1:8080/ehrbase/
 ```
 
-**Note**: If you have port 80 already in use by another program, e.g., you want to run aqlbetter https://github.com/crs4/aqlbetter-dockerized, then use compose-port8088.yml instead of compose.yml and optionally replace 8088 with the port of your choice. Remember to rebuild the images and then access the frontend at http://frontend.localhost:8088 or if you choose another port replace 8088 with your port.
+**Note**: If you have port 80 already in use by another program, e.g., you want to run aqlbetter https://github.com/crs4/aqlbetter-dockerized, then use compose-port8088.yml instead of compose.yml and optionally replace 8088 with the port of your choice. Start by removing the old frontend image:
+```
+docker image rm openehrtool-v2-frontend:latest
+```
+and then rebuild it:
+```
+docker compose -f compose-port8088.yml up -d
+```
+and then access the frontend at http://frontend.localhost:8088 (replace 8088 with your chosen port if different).
 
 ## &#x1F335; Installing and running locally&#x1F335;
 
