@@ -31,7 +31,7 @@ Now open the browser and type the address:
 ```
 http://frontend.localhost
 ```
-In the login mask type a username and password for a user already registered in EHRBase. The server address will be http://ehrbase:8080/erhbase/
+In the login mask type a username and password for a user already registered in EHRBase. The server address will be http://ehrbase:8080/ehrbase/
 
 For instance, recalling the default user in EHRBase:
 ```
@@ -80,7 +80,7 @@ docker network inspect bridge --format='{{(index .IPAM.Config 0).Gateway}}'
 ```
 output will be something like 172.17.0.1 . The server url will be then:
 ```
-http://172.17.0.1:8080/erhbase/
+http://172.17.0.1:8080/ehrbase/
 ```
 For instance, recalling the default user in EHRBase:
 ```
