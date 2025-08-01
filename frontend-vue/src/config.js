@@ -1,2 +1,2 @@
 export const BACKEND_HOST =
-  process.env.VUE_APP_BACKEND_HOSTNAME || 'http://localhost:5000';
+  process.env.VUE_APP_BACKEND_HOSTNAME || 'localhost:5000';
