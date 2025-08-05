@@ -31,6 +31,8 @@
             Put
           </label>
         </div>
+      </div>
+      <div class="radio-group-container">
         <div class="radio-group">
           <label>
             <input type="radio" v-model="onwhat" value="query" />
@@ -294,7 +296,7 @@
                         :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
                         class="form-check-input" />
                       <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                      }}</label>
+                        }}</label>
                     </div>
                   </div>
 

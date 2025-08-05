@@ -27,6 +27,8 @@
             Post
           </label>
         </div>
+      </div>
+      <div class="radio-group-container">
         <div class="radio-group">
           <label>
             <input type="radio" v-model="onwhat" value="template" />
@@ -101,7 +103,7 @@
                     <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
                       :value="option" v-model="radioparam.selected" class="form-check-input" />
                     <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                    }}</label>
+                      }}</label>
                   </div>
                 </div>
 

@@ -34,6 +34,14 @@
             Del
           </label>
         </div>
+      </div>
+      <div class="radio-group-container">
+        <div class="radio-group">
+          <label>
+            <input type="radio" v-model="onwhat" value="All" />
+            All
+          </label>
+        </div>
         <div class="radio-group">
           <label>
             <input type="radio" v-model="onwhat" value="composition" />
@@ -250,9 +258,19 @@ export default defineComponent({
   computed: {
     filteredMethods() {
       if (this.methodType === 'All') {
-        return this.currentMethods;
+        if (this.onwhat === 'All') {
+          return this.currentMethods;
+        }
+        else {
+          return this.currentMethods.filter(method => method.what.includes(this.onwhat));
+        }
       } else {
-        return this.currentMethods.filter(method => method.type.includes(this.methodType) && method.what.includes(this.onwhat));
+        if (this.onwhat === 'All') {
+          return this.currentMethods.filter(method => method.type.includes(this.methodType));
+        }
+        else {
+          return this.currentMethods.filter(method => method.type.includes(this.methodType) && method.what.includes(this.onwhat));
+        }
       }
     },
     placeholderText() {
