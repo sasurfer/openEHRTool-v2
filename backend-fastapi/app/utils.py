@@ -10,6 +10,7 @@ from typing import Any, Callable
 import re
 from app.xdiff import xdiff
 import collections.abc
+import copy
 
 
 def getauth(username, password):
@@ -242,3 +243,193 @@ def convert_duration_to_days(duration_string):
         return 365 * duration
     else:
         return -1
+
+
+def filter_methods(dvalues, methodType):
+    if methodType == "All":
+        return dvalues
+    else:
+        results = []
+        dvaluesuntilcolon = [d.split(":")[2] for d in dvalues]
+        for i, d in enumerate(dvaluesuntilcolon):
+            if methodType in d:
+                results.append(dvalues[i])
+        return results
+
+
+def filter_type(dvalues, onwhat):
+    if onwhat == "All":
+        return dvalues
+    else:
+        results = []
+        onwhat = onwhat.lower()
+        dvaluesuntilcolon = [d.split(":")[2] for d in dvalues]
+        for i, d in enumerate(dvaluesuntilcolon):
+            if onwhat in d.lower():
+                results.append(dvalues[i])
+        return results
+
+
+def filter_outcome(dvalues, outcome):
+    if outcome == "All":
+        return dvalues
+    else:
+        success = []
+        failure = []
+        dvaluesuntilcolon = [d.split(":")[2] for d in dvalues]
+        results = []
+        for i, d in enumerate(dvaluesuntilcolon):
+            if "template" in d:
+                if "could not" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+            elif "query" in d:
+                if "could not" in dvalues[i] or "unsuccessfully" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+            elif "composition" in d:
+                if "could not" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+            elif "ehrstatus" in d:
+                if "could not" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+            elif "directory" in d:
+                if "could not" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+            elif "EHR" in d:
+                if "could not" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+            elif "contribution" in d:
+                if "could not" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+            elif "form" in d:
+                if "could not" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+            elif "logged in" in d:
+                if "Unsuccessfully" in dvalues[i]:
+                    failure.append(dvalues[i])
+                else:
+                    success.append(dvalues[i])
+
+        if outcome == "Success":
+            return success
+        elif outcome == "Failure":
+            return failure
+
+
+def filter_order(dvalues, order):
+    time_format = "%Y/%m/%d-%H:%M:%S"
+    if order == "oldest":  # oldest first = ascending
+        sorted_oldest = sorted(
+            dvalues, key=lambda x: datetime.strptime(x[:19], time_format)
+        )
+        return sorted_oldest
+    elif order == "newest":  # newest first=descending
+        sorted_newest = sorted(
+            dvalues, key=lambda x: datetime.strptime(x[:19], time_format), reverse=True
+        )
+        return sorted_newest
+
+
+def is_input_safe(user_input):
+    # List of dangerous keywords/patterns (case insensitive)
+    dangerous_pattern = re.compile(
+        r"(os\.)|(sys\.)|(open\s*\()|(exec\s*\()|(eval\s*\()|(__import__)",
+        re.IGNORECASE,
+    )
+    # Reject if double underscore (__)
+    if "__" in user_input:
+        return False
+    if dangerous_pattern.search(user_input):
+        return False
+    return True
+
+
+def findexprandtokens(custom_search):
+    line = custom_search.strip()
+    python_expr = (
+        line.replace("AND", "and")
+        .replace("OR", "or")
+        .replace("NOT", "not")
+        .replace("and", " and ")
+        .replace("or", " or ")
+        .replace("not", " not ")
+    )
+    line = re.sub(r"\s+", " ", line)
+    tokens = set(
+        line.replace("(", "")
+        .replace(")", "")
+        .replace(" and ", " ")
+        .replace(" or ", " ")
+        .replace(" not ", " ")
+        .replace(" AND ", " ")
+        .replace(" OR ", " ")
+        .replace(" NOT ", " ")
+        .split()
+    )
+    return python_expr, tokens
+
+
+def evaluate_custom_search(python_expr, tokens, test_string):
+    pe = copy.deepcopy(python_expr)
+    test_string_split = test_string.split()
+    otr = ["and", "or", "not", "(", ")"]
+    test_string_corrected = [word for word in test_string_split if word not in otr]
+    context = {token: (token in test_string_corrected) for token in tokens}
+    wordsinstring = [word for word in test_string.split()]
+    # Sostituisci i token con True/False dal context
+    for token in tokens:
+        if "*" in token:
+            print(f"Checking for token: {token}")
+            print(f"words in string: {wordsinstring}")
+            if token.startswith("*") and token.endswith("*"):
+                for word in wordsinstring:
+                    if token[1:-1] in word:
+                        pe = pe.replace(token, f"True")
+                        break
+                pe = pe.replace(token, f"False")
+            elif token.startswith("*"):
+                for word in wordsinstring:
+                    if word.endswith(token[1:]):
+                        pe = pe.replace(token, f"True")
+                        break
+                pe = pe.replace(token, f"False")
+            elif token.endswith("*"):
+                for word in wordsinstring:
+                    if word.startswith(token[:-1]):
+                        pe = pe.replace(token, f"True")
+                        break
+                pe = pe.replace(token, f"False")
+            else:
+                pe = pe.replace(token, f"False")
+        else:
+            pe = pe.replace(token, f"context['{token}']")
+    return eval(pe, {"context": context})
+
+
+def filter_customsearch(dvalues, customsearch):
+    if not customsearch:
+        return dvalues
+    if not is_input_safe(customsearch):
+        return dvalues
+    else:
+        python_expr, tokens = findexprandtokens(customsearch)
+        results = []
+        for d in dvalues:
+            if evaluate_custom_search(python_expr, tokens, d):
+                results.append(d)
+        return results

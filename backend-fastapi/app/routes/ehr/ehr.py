@@ -906,7 +906,7 @@ async def delete_directory(
             redis_client,
             "Delete EHR directory: Directory folderfor ehrid="
             + ehrid
-            + " versionededId="
+            + " versionedId="
             + str(directoryversionedId)
             + " deleted successfully",
         )
@@ -917,7 +917,7 @@ async def delete_directory(
         if 400 <= e.status_code < 500:
             insertlogline(
                 redis_client,
-                f"Delete EHR directory: Directory folder for ehr {ehrid} versionededId {directoryversionedId} could not be deleted",
+                f"Delete EHR directory: Directory folder for ehr {ehrid} versionedId {directoryversionedId} could not be deleted",
             )
             return JSONResponse(
                 content={"folder": e.__dict__}, status_code=e.status_code

@@ -5,6 +5,7 @@ import EHRPage from '@/views/EHRPage.vue';
 import TemplatePage from '@/views/TemplatePage.vue';
 import CompositionPage from '@/views/CompositionPage.vue';
 import AQLPage from '@/views/AQLPage.vue';
+import LOGPage from '@/views/LOGPage.vue';
 
 const routes = [
   {
@@ -45,6 +46,12 @@ const routes = [
     name: 'query',
     component: AQLPage,
     meta: { sidebarIndex: 5 }, // Query icon is index 5
+  },
+  {
+    path: '/log',
+    name: 'log',
+    component: LOGPage,
+    meta: { sidebarIndex: 9} // Log icon is index 9
   }
 ];
 

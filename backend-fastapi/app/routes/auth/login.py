@@ -31,10 +31,11 @@ async def login(request: Request,login_data: LoginRequest):
             request.app.state.auth = auth
             request.app.state.ehrbase_version = ehrbase_version
             logger.debug(f"Successfully logged in with username: {username}")
-            insertlogline(request.app.state.redis_client, f"Successfully logged in with username: {username}")
+            insertlogline(request.app.state.redis_client, f"Successfully logged in with username: {username} input_url: {input_url}")
             token = create_jwt_token(username,secret_key=request.app.state.secret_key)
             return {"token": token}
         else:
+            insertlogline(request.app.state.redis_client, f"Unsuccessfully logged in with username: {username} input_url: {input_url}")
             raise HTTPException(status_code=401, detail="Invalid credentials")
     except Exception as e:
         print(f"An exception occurred during login: {e}")

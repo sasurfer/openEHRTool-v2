@@ -2,3 +2,7 @@
 *.old
 *.orig
 __pycache__
+.vscode
+OLD_FILES
+TESTS
+ADDED
