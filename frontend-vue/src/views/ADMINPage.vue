@@ -121,7 +121,7 @@
                   <!-- New Select Dropdown -->
                   <select v-else-if="param.type === 'select'" v-model="param.value" class="form-select">
                     <!-- Default disabled option -->
-                    <option disabled value="">{{ placeholderText }}</option>
+                    <option disabled value="">{{ getPlaceholderText(param) }}</option>
                     <!-- Dynamic options from data -->
                     <option v-for="optionValue in this[param.optionsKey]" :key="optionValue" :value="optionValue">
                       {{ optionValue }}
@@ -144,7 +144,7 @@
                     <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
                       :value="option" v-model="radioparam.selected" class="form-check-input" />
                     <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                      }}</label>
+                    }}</label>
                   </div>
                 </div>
 
@@ -275,6 +275,7 @@ export default defineComponent({
       results: null,
       isLoadingEHR: false,
       isLoadingTemplate: false,
+      isLoadingTemplateNames: false,
       isLoadingComposition: false,
       isLoadingAQL: false,
       ehrid: '',
@@ -282,6 +283,11 @@ export default defineComponent({
       subjectnamespace: '',
       selectedFile: null,
       templateNames: [],
+      queryNames: [],
+      versionOptions: [],
+      nametoversions: {},
+      isLoadingQueryNames: false,
+      isLoadingQueryVersions: false,
       // selectedMethodIndex: null,
     };
   },
@@ -303,6 +309,16 @@ export default defineComponent({
         }
       }
     },
+    selectedQueryNameValue() {
+      const queryNameParam = this.currentParams.find(p => p.label === "Qualified Query Name" && p.type === "select");
+      return queryNameParam ? queryNameParam.value : null;
+    },
+    selectedVersionValue() {
+      const versionParam = this.currentParams.find(p =>
+        (p.label === 'Version' || p.label === 'Version (Optional)') && p.type === 'select'
+      );
+      return versionParam ? versionParam.value : null;
+    }
   },
   mounted() {
     // Fetch data when the component is first mounted
@@ -328,10 +344,59 @@ export default defineComponent({
     },
     onwhat() {
       this.selectedMethod = null;
-    }
+    },
+    selectedQueryNameValue(newQueryName, oldQueryName) {
+      const versionParam = this.currentParams.find(p => (p.label === 'Version (Optional)' || p.label === 'Version') && p.type === "select");
 
+      if (newQueryName && this.nametoversions && this.nametoversions[newQueryName]) {
+        this.versionOptions = [...this.nametoversions[newQueryName]]; // Use spread to ensure reactivity if needed
+        if (versionParam) {
+          // Reset version if the new query name is different from the old one,
+          // or if the current version is no longer valid for the new query name.
+          const queryNameChanged = oldQueryName !== undefined && newQueryName !== oldQueryName;
+          if (queryNameChanged || !this.versionOptions.includes(versionParam.value)) {
+            versionParam.value = '';
+          }
+        }
+      } else {
+        this.versionOptions = [];
+        if (versionParam) {
+          versionParam.value = '';
+        }
+      }
+
+    },
+    selectedVersionValue(newVersion, oldVersion) {
+      if (newVersion !== oldVersion) {
+        this.fetchQuery(this.selectedQueryNameValue, newVersion);
+      }
+    }
   },
   methods: {
+    getPlaceholderText(param) {
+      if (param.label === 'Qualified Query Name') {
+        if (this.isLoadingQueryNames) {
+          return 'Loading...';
+        } else if (this.queryNames && this.queryNames.length > 0) {
+          return 'Please select a query name';
+        } else {
+          return 'No data available';
+        }
+      } else if (param.label === 'Version' || param.label === 'Version (Optional)') {
+        if (this.isLoadingQueryNames) {
+          return 'Loading...';
+        } else if (this.versionOptions && this.versionOptions.length > 0) {
+          return 'Please select a version';
+        } else if (this.currentParams.find(p => p.label === "Qualified Query Name" && p.type === "select")?.value) {
+          return 'No versions available';
+        } else {
+          return 'Select Query Name first';
+        }
+      }
+      else {
+        return "No data available";
+      }
+    },
     workingFiltered(index) {
       const myindex = this.getIndexByTypeWhat(this.currentMethods, index, this.methodType, this.onwhat);
       return this.getWorkingForMethod(myindex);
@@ -395,6 +460,8 @@ export default defineComponent({
       this.results = null; // Reset results
       if (index2 === 1) {
         this.fetchTemplateNames();
+      } else if (index2 === 5) {
+        this.fetchQueryNames();
       }
     },
     getMethodsForEHR() {
@@ -645,16 +712,34 @@ export default defineComponent({
           console.error("Error in executeAction:", error);
           this.results = `Error: ${error.message}`;
         }
+      } else if (action == 'submit_delete_stored_query') {
+        console.log('inside submit_delete_stored_query')
+        this.resultsOK = false;
+        const queryname = this.currentParams.find(p => p.label === 'Qualified Query Name')?.value;
+        console.log('queryname', queryname);
+        if (!queryname) {
+          this.results = 'Qualified Query Name is required';
+          return;
+        }
+        const queryversion = this.currentParams.find(p => p.label === 'Version')?.value;
+        console.log('queryversion', queryversion);
+        if (!queryversion) {
+          this.results = 'Version is required';
+          return;
+        }
+        try {
+          const queryResults = await this.deletestoredquery(queryname, queryversion);
+          console.log('results', queryResults);
+          this.results = JSON.stringify(queryResults, null, 2);
+          this.fetchQueryNames();
+          this.selectedVersionValue = null;
+          this.selectedQueryNameValue = null;
+        }
+        catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
+        }
       }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1162,30 +1247,31 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-    async deletedirectory(ehrid, version) {
-      console.log('inside deletedirectory')
-      console.log(ehrid)
+    async deletestoredquery(queryname, queryversion) {
+      console.log('inside deletestoredquery')
       console.log(localStorage.getItem("authToken"))
+      console.log('queryname=', queryname)
+      console.log('queryversion=', queryversion)
       this.isLoading = true;
       this.resultsOK = false;
       // await this.sleep(5000);
       try {
-        console.log('before get')
-        const response = await axios.delete(`http://${BACKEND_HOST}/ehr/${ehrid}/directory`,
+        const response = await axios.delete(`http://${BACKEND_HOST}/admin/query/`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
             },
             params: {
-              value: version
+              queryname: queryname,
+              version: queryversion
             },
             timeout: 2000000,
           });
         this.resultsOK = true;
-        return response.data.folder;
+        return response.data.query;
       }
       catch (error) {
-        console.error("Error in deletedirectory:", error);
+        console.error("Error in deletestoredquery:", error);
         if (error?.response?.status) {
           if (error.response.status === 401) {
             console.error("Unauthorized access. Please login again.");
@@ -1224,20 +1310,103 @@ export default defineComponent({
       });
 
       return formatted;
-    }
+    },
+    async fetchQueryNames() {
+      try {
+        console.log('fetchQueryNames called');
+        this.isLoadingQueryNames = true;
+        this.queryNames = [];
+        const response = await axios.get(`http://${BACKEND_HOST}/query/query`,
+          { method: 'GET', headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }, },
+          { timeout: 2000000 });
+        this.isLoadingQueryNames = false;
+        if (response.status === 401) {
+          console.error("Unauthorized access. Please login again.");
+          this.logout();
+          return
+        }
+        if (response.status != 200) {
+          console.error("Error fetching templates list:", response);
+          return;
+        }
+        // Assuming the backend returns data in this structure
+        console.log(response);
+        console.log(response.data);
+        this.nametoversions = response.data.query.nametoversions;
+        this.queries = response.data.query.queries;
+        console.log('this.nametoversions', this.nametoversions);
+        this.queryNames = Object.keys(this.nametoversions);
+        console.log('this.queryNames', this.queryNames);
+        this.queriesinfo = response.data.query.queriesinfo;
+        if (this.index2 === 5) {
+          console.log('queryNamessssssssss', this.queryNames);
+          if (!this.queryNames.includes('None')) {
+            this.queryNames.unshift('None');
+            console.log('queryNamessssssssss', this.queryNames);
+            this.nametoversions['None'] = [''];
+          }
+        }
 
+      } catch (error) {
+        console.error("Error fetching queries:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+        }
+      }
+      finally {
+        this.isLoadingQueryNames = false;
+      }
 
+      return this.queriesinfo;
+    },
+    async fetchQuery(queryname, queryversion) {
+      try {
+        if (queryname === 'None') {
+          this.aql = '';
+          return;
+        }
+        if (!queryname && !queryversion) {
+          return;
+        }
+        console.log('fetchQuery called');
 
+        const response = await axios.get(`http://${BACKEND_HOST}/query/`,
+          {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` },
+            params: {
+              queryname: queryname,
+              version: queryversion,
+            },
+            timeout: 2000000
+          });
+        this.isLoading = false;
+        if (response.status === 401) {
+          console.error("Unauthorized access. Please login again.");
+          this.logout();
+          return
+        }
+        if (response.status != 200) {
+          console.error("Error fetching query:", response);
+          return;
+        }
+        this.aql = response.data.query.q;
 
+      } catch (error) {
+        console.error("Error fetching query", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+        }
+      }
 
-
-
-
-
-
-
-
-
+    },
 
 
 

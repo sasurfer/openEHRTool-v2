@@ -15,6 +15,9 @@ from app.backend_ehrbase.admin.ehr import (
 from app.backend_ehrbase.admin.status import (
     get_status_admin_ehrbase,
 )
+from app.backend_ehrbase.admin.query import (
+    delete_query_admin_ehrbase,
+)
 import redis
 from app.dependencies.redis_dependency import get_redis_client
 from typing import Optional
@@ -25,6 +28,7 @@ from app.models.template.template import (
 )
 from datetime import datetime
 from lxml import etree
+from app.models.query.query import AQLVersion, AQLName
 
 router = APIRouter()
 
@@ -239,4 +243,61 @@ async def delete_admin_ehr(
             print(f"An exception occurred during delete_admin_ehr: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during delete_admin_ehr"
+            )
+
+
+@router.delete("/query")
+async def delete_admin_query(
+    request: Request,
+    queryname: str = Query(...),
+    version: str = Query(...),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_admin_query")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        if version != None:
+            AQLVersion(root=version)
+    except Exception as e:
+        logger.error(f"An exception occurred during checkversion: {e}")
+        raise HTTPException(
+            status_code=400, detail="Invalid version format. Must be like 1.0.0 "
+        )
+    try:
+        AQLName(name=queryname)
+    except Exception as e:
+        logger.error(f"An exception occurred during checkqueryname: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid query name format. Must be like org.ehrbase.local::myquery",
+        )
+    try:
+        url_base_admin = request.app.state.url_base_admin
+        response = await delete_query_admin_ehrbase(
+            request, auth, url_base_admin, queryname, version
+        )
+        insertlogline(
+            redis_client,
+            f"Delete admin query: query={queryname} version={version} deleted successfully",
+        )
+        return JSONResponse(content={"query": response["query"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during delete_query: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Delete admin query: query={queryname} version={version} could not be deleted successfully",
+            )
+            return JSONResponse(
+                content={"query": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during delete_admin_template: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during delete_admin_query"
             )
