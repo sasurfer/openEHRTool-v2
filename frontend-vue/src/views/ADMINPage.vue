@@ -144,7 +144,7 @@
                     <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
                       :value="option" v-model="radioparam.selected" class="form-check-input" />
                     <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                    }}</label>
+                      }}</label>
                   </div>
                 </div>
 
@@ -358,21 +358,20 @@ export default defineComponent({
     },
     getNeedFile(index) {
       const needFile = [
-        { file: true, label: 'Choose Template File' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: true, label: 'Choose EHR File' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: true, label: 'Choose Contribution File' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' },
-        { file: false, label: '' }
+        { file: true, label: 'Choose Template File' },//1
+        { file: false, label: '' },//2
+        { file: false, label: '' },//3
+        { file: true, label: 'Choose EHR File' },//4
+        { file: false, label: '' },//5
+        { file: false, label: '' },//6
+        { file: false, label: '' },//7
+        { file: false, label: '' },//8
+        { file: true, label: 'Choose Contribution File' },//9
+        { file: false, label: '' },//10
+        { file: false, label: '' },//11
+        { file: false, label: '' },//12
+        { file: false, label: '' },//13
+        { file: false, label: '' }//14
       ];
       return needFile[index] || { file: false, label: '' };
     },
@@ -406,16 +405,15 @@ export default defineComponent({
           { label: 'Delete all Templates', type: ['Del'], what: ['template'] },//3
           { label: 'Update EHR', type: ['Put'], what: ['ehr', 'ehrstatus'] },//4
           { label: 'Delete EHR', type: ['Del'], what: ['ehr'] },//5
-          { label: 'Delete all EHRs', type: ['Del'], what: ['ehr'] },//6
-          { label: 'Delete Stored Query', type: ['Del'], what: ['query'] },//7
-          { label: 'Delete Directory', type: ['Del'], what: ['folder'] },//8
+          { label: 'Delete Stored Query', type: ['Del'], what: ['query'] },//6
+          { label: 'Delete Directory', type: ['Del'], what: ['folder'] },//7
           { label: 'Delete Composition', type: ['Del'], what: ['composition'] },//9
-          { label: 'Update Contribution', type: ['Put'], what: ['contribution'] },//10
-          { label: 'Delete Contribution', type: ['Del'], what: ['contribution'] },//11
-          { label: 'Merge source EHR into target EHR', type: ['Post'], what: ['ehr'] },//12
-          { label: 'Retrieve target EHR', type: ['Get'], what: ['ehr'] },//13
-          { label: 'Retrieve merging status of source EHR/target EHR', type: ['Get'], what: ['ehr'] },//14
-          { label: 'Retrieve merging details', type: ['Get'], what: ['ehr'] },//15
+          { label: 'Update Contribution', type: ['Put'], what: ['contribution'] },//9
+          { label: 'Delete Contribution', type: ['Del'], what: ['contribution'] },//10
+          { label: 'Merge source EHR into target EHR', type: ['Post'], what: ['ehr'] },//11
+          { label: 'Retrieve target EHR', type: ['Get'], what: ['ehr'] },//12
+          { label: 'Retrieve merging status of source EHR/target EHR', type: ['Get'], what: ['ehr'] },//13
+          { label: 'Retrieve merging details', type: ['Get'], what: ['ehr'] },//14
         ]
       };
       return methods['methods'] || [];
@@ -429,16 +427,15 @@ export default defineComponent({
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_all_templates' }],//3
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_update_ehr' }],//4
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_ehr' }],//5
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_all_ehrs' }],//6
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_stored_query' }],//7
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_directory' }],//8
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_composition' }],//9
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_update_contribution' }],//10
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_contribution' }],//11
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_merge' }],//12
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_get_target_ehr' }],//13
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_folder_get_merging_status' }],//14
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_get_merging_details' }],//15      
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_stored_query' }],//6
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_directory' }],//7
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_composition' }],//8
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_update_contribution' }],//9
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_contribution' }],//10
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_merge' }],//11
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_get_target_ehr' }],//12
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_folder_get_merging_status' }],//13
+        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_get_merging_details' }],//14
 
 
       ];
@@ -460,7 +457,6 @@ export default defineComponent({
         [],//12
         [],//13
         [],//14
-        [],//15
       ];
       return radioParams[index] || [];
     },
@@ -476,11 +472,10 @@ export default defineComponent({
         false,//8
         false,//9
         false,//10
-        false,//11
+        true,//11
         true,//12
         true,//13
         true,//14
-        true,//15
       ];
       return working[index] || false;
     },
@@ -505,8 +500,7 @@ export default defineComponent({
           // { label: '2 POST', value: "", type: 'text' }
         ],
         [{ label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],//5
-        [],//6
-        [//7
+        [//6
           {
             label: "Qualified Query Name",
             value: "",
@@ -514,22 +508,22 @@ export default defineComponent({
             optionsKey: 'queryNames',
             placeholder: "Select Query Name",
           }, { label: 'Version', value: '', optionsKey: 'versionOptions', type: 'select', placeholder: "Select Version" }],
-        [//8
+        [//7
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Directory id', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
-        [//9
+        [//8
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
+        [//9
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Contribution versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
         [//10
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Contribution versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
         [//11
-          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Contribution versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
-        [//12
           { label: 'source EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'target EHRid', value: '', type: 'text', placeholder: "a8e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Detail Level (optional)', value: '', type: 'text', placeholder: "BASIC" }, { label: 'Reversible', value: '', type: 'Boolean', placeholder: "true" }, { label: 'Dry Run (optional)', value: '', type: 'Boolean', placeholder: "true" }, { label: 'Folder Merge (optional)', value: '', type: 'text', placeholder: "BASIC" }, { label: 'Composition Merge (optional)', value: '', type: 'text', placeholder: "BASIC" }],
-        [//13
+        [//12
           { label: 'Source EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }],
-        [//14
+        [//13
           { label: 'Source EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'target EHRid', value: '', type: 'text', placeholder: "a8e46cce-d8c9-4db8-940b-ee3db170a646" },
           { label: 'Cascaded (optional)', value: '', type: 'Boolean', placeholder: "true" }],
-        [//15
+        [//14
           { label: 'Source EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'target EHRid', value: '', type: 'text', placeholder: "a8e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Unmerge data (optional)', value: '', type: 'Boolean', placeholder: "true" },
         ],
       ];
