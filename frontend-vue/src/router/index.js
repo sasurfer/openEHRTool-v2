@@ -6,6 +6,7 @@ import TemplatePage from '@/views/TemplatePage.vue';
 import CompositionPage from '@/views/CompositionPage.vue';
 import AQLPage from '@/views/AQLPage.vue';
 import LOGPage from '@/views/LOGPage.vue';
+import ADMINPage from '@/views/ADMINPage.vue';
 
 const routes = [
   {
@@ -51,7 +52,13 @@ const routes = [
     path: '/log',
     name: 'log',
     component: LOGPage,
-    meta: { sidebarIndex: 9} // Log icon is index 9
+    meta: { sidebarIndex: 9 } // Log icon is index 9
+  },
+  {
+    path: '/admin',
+    name: 'admin',
+    component: ADMINPage,
+    meta: { sidebarIndex: 8 } // Admin icon is index 8
   }
 ];
 

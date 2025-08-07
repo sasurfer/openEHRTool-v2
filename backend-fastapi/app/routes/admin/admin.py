@@ -1,0 +1,242 @@
+from fastapi import APIRouter, HTTPException, Request, Depends, Query
+from app.security import verify_jwt_token, get_token_from_header
+from uuid import UUID
+from app.utils import get_logger
+from app.utils import insertlogline
+from fastapi.responses import JSONResponse
+from app.backend_ehrbase.admin.template import (
+    put_template_admin_ehrbase,
+    delete_template_admin_ehrbase,
+    delete_templates_admin_ehrbase,
+)
+from app.backend_ehrbase.admin.ehr import (
+    delete_ehr_admin_ehrbase,
+)
+from app.backend_ehrbase.admin.status import (
+    get_status_admin_ehrbase,
+)
+import redis
+from app.dependencies.redis_dependency import get_redis_client
+from typing import Optional
+import json
+from app.models.template.template import (
+    get_template_enum_value,
+    TemplatePost,
+)
+from datetime import datetime
+from lxml import etree
+
+router = APIRouter()
+
+
+@router.get("/status")
+async def get_admin_status(
+    request: Request,
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside get_admin_status")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        url_base_admin = request.app.state.url_base_admin
+        response = await get_status_admin_ehrbase(request, auth, url_base_admin)
+        insertlogline(
+            redis_client,
+            f"Get admin status: user has admin permissions",
+        )
+        return JSONResponse(content={"status": response["message"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during get_admin_status: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Get admin status: user does not have admin permissions",
+            )
+            return JSONResponse(
+                content={"status": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during get_admin_status: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during get_admin_status"
+            )
+
+
+@router.put("/template")
+async def put_admin_template(
+    request: Request,
+    data: TemplatePost,
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside put_admin_template")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    template = data.template
+    try:
+        xml_bytes = template.encode("utf-8")
+        root = etree.fromstring(xml_bytes)
+        namespaces = {"ns": "http://schemas.openehr.org/v1"}
+        templateid = root.xpath(
+            "//ns:template_id/ns:value/text()", namespaces=namespaces
+        )[0]
+        template = etree.tostring(root)
+    except Exception as e:
+        logger.error(f"unable to read templateid: {e}")
+        raise HTTPException(
+            status_code=400, detail="Unable to read template id from template"
+        )
+
+    try:
+        url_base_admin = request.app.state.url_base_admin
+        response = await put_template_admin_ehrbase(
+            request, auth, url_base_admin, templateid, template
+        )
+        insertlogline(
+            redis_client,
+            f"Put admin template: template {templateid} updated successfully",
+        )
+        templatetext = {"template_id": templateid, "status": response["status"]}
+        return JSONResponse(content={"template": templatetext}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during put_admin_template: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Put admin template: template {templateid} could not be updated successfully",
+            )
+            return JSONResponse(
+                content={"template": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during put_template: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during put_template"
+            )
+
+
+@router.delete("/template")
+async def delete_admin_template(
+    request: Request,
+    template_name: str = Query(...),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_admin_template")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        url_base_admin = request.app.state.url_base_admin
+        response = await delete_template_admin_ehrbase(
+            request, auth, url_base_admin, template_name
+        )
+        insertlogline(
+            redis_client,
+            f"Delete admin template: template {template_name} deleted successfully",
+        )
+        return JSONResponse(content={"template": response["template"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during delete_template: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Delete admin template: template {template_name} could not be deleted successfully",
+            )
+            return JSONResponse(
+                content={"template": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during delete_admin_template: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during delete_admin_template"
+            )
+
+
+@router.delete("/templates")
+async def delete_admin_templates(
+    request: Request,
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_admin_templates")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        url_base_admin = request.app.state.url_base_admin
+        response = await delete_templates_admin_ehrbase(request, auth, url_base_admin)
+        insertlogline(
+            redis_client,
+            f"Delete admin templates: templates deleted successfully",
+        )
+        return JSONResponse(
+            content={"templates": response["templates"]},
+            status_code=200,
+        )
+    except Exception as e:
+        logger.error(f"An exception occurred during delete_admin_templates: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Delete admin templates: templates could not be deleted successfully",
+            )
+            return JSONResponse(
+                content={"template": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during delete_admin_templates: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during delete_admin_templates"
+            )
+
+
+@router.delete("/ehr")
+async def delete_admin_ehr(
+    request: Request,
+    ehrid: str = Query(...),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_admin_ehr")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        url_base_admin = request.app.state.url_base_admin
+        response = await delete_ehr_admin_ehrbase(request, auth, url_base_admin, ehrid)
+        insertlogline(
+            redis_client,
+            f"Delete admin ehr: ehr with {ehrid} deleted successfully",
+        )
+        return JSONResponse(content={"ehr": response["ehr"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during delete_ehr: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Delete admin ehr: ehr with {ehrid} could not be deleted successfully",
+            )
+            return JSONResponse(content={"ehr": e.__dict__}, status_code=e.status_code)
+        else:
+            print(f"An exception occurred during delete_admin_ehr: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during delete_admin_ehr"
+            )
