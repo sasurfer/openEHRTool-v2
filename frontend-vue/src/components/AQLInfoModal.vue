@@ -7,7 +7,7 @@
         <li v-for="(item, index) in aqlData" :key="index"
           :class="{ 'odd-item': index % 2 !== 0, 'even-item': index % 2 === 0 }">
 
-          {{ item.name }} {{ item.version }} {{ item.saved }}
+          {{ item.name }} {{ item.version }} {{ item.saved }} UTC
         </li>
       </ol>
 

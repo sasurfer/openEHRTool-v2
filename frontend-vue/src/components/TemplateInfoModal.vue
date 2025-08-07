@@ -6,7 +6,7 @@
       <ul>
         <li v-for="(item, index) in templateData" :key="index"
           :class="{ 'odd-item': index % 2 !== 0, 'even-item': index % 2 === 0 }">
-          {{ item.template_id }} {{ item.created_timestamp }}
+          {{ item.template_id }} {{ item.created_timestamp }} UTC
         </li>
       </ul>
 
