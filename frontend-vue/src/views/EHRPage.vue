@@ -45,11 +45,11 @@
         <div class="radio-group">
           <label>
             <input type="radio" v-model="onwhat" value="ehr" />
-            Ehr
+            EHR
           </label>
           <label>
             <input type="radio" v-model="onwhat" value="ehrstatus" />
-            Ehrstatus
+            EHRStatus
           </label>
           <label>
             <input type="radio" v-model="onwhat" value="folder" />
