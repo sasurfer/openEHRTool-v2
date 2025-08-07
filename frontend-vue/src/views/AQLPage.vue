@@ -133,7 +133,7 @@
                         :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
                         class="form-check-input" />
                       <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                        }}</label>
+                      }}</label>
                     </div>
                   </div>
 
@@ -225,7 +225,7 @@
                         :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
                         class="form-check-input" />
                       <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                        }}</label>
+                      }}</label>
                     </div>
                   </div>
 
@@ -296,7 +296,7 @@
                         :name="`param-${radioIndex}`" :value="option" v-model="radioparam.selected"
                         class="form-check-input" />
                       <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                        }}</label>
+                      }}</label>
                     </div>
                   </div>
 
@@ -551,19 +551,20 @@ export default defineComponent({
         ? { backgroundColor: '#bad489', color: 'white' } : {};
     },
     getIndexByTypeWhat(arr, targetIndex, type, what) {
-      if (this.methodType === 'All') {
-        return targetIndex;
-      }
-      let count = 0;
+      let count = -1;
       for (let i = 0; i < arr.length; i++) {
-        if (arr[i].type.includes(type) && arr[i].what.includes(what)) {
-          if (targetIndex === count) {
+        const method = arr[i];
+        const typeMatch = type === 'All' || method.type.includes(type);
+        const whatMatch = what === 'All' || method.what.includes(what);
+
+        if (typeMatch && whatMatch) {
+          count++;
+          if (count === targetIndex) {
             return i;
           }
-          count++;
         }
       }
-      return -1; // Return -1 if no element with the specified type is found.
+      return -1; // Should not be reached if targetIndex is valid
     },
     getNeedFile(index) {
       const needFile = [
