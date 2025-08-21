@@ -29,7 +29,9 @@ async def get_sidebar_ehrs_ehrbase(
                 # Retrieve data from Redis
                 logger.debug("Retrieving data from Redis")
                 ehrs = redis_client.lrange("key_ehrs", 0, -1)
-                return ehrs
+                if len(ehrs) != 0:
+                    return ehrs
+                logger.debug("No EHRs found in Redis")
         logger.debug("Retrieving data from EHRBase server")
 
         # Retrieve data from EHRBase server
@@ -120,9 +122,10 @@ async def get_sidebar_compositions_ehrbase(
                 print("GGGGGGGGGGGGG")
                 logger.debug("GGGGGGGGGG")
                 compositions = redis_client.lrange("key_compositions", 0, -1)
-                return compositions
-        print("HHHHHHHHHHHHHH")
-        logger.debug("HHHHHHHHHHHH")
+                if len(compositions) != 0:
+                    return compositions
+                logger.debug("No compositions found in Redis")
+        logger.debug("Retrieving data from EHRBase server")
         # retrieve data from EHRBase server
         compositions = []
         # get compositions
@@ -167,10 +170,10 @@ async def get_sidebar_queries_ehrbase(
                 logger.debug("GGGGGGGGGG")
                 queries = redis_client.lrange("key_queries", 0, -1)
                 queries = [json.loads(q) for q in queries]
-                print(f"queries: {queries}")
-                return queries
-        print("HHHHHHHHHHHHHH")
-        logger.debug("HHHHHHHHHHHH")
+                if len(queries) != 0:
+                    return queries
+                logger.debug("No queries found in Redis")
+        logger.debug("Retrieving data from EHRBase server")
         # retrieve data from EHRBase server
         queries = []
         # get queries

@@ -29,6 +29,7 @@ from app.models.template.template import (
 from datetime import datetime
 from lxml import etree
 from app.models.query.query import AQLVersion, AQLName
+from app.backend_redis.myredis import remove_item_from_redis_list
 
 router = APIRouter()
 
@@ -230,6 +231,10 @@ async def delete_admin_ehr(
             redis_client,
             f"Delete admin ehr: ehr with {ehrid} deleted successfully",
         )
+        if redis_client:
+            removed = remove_item_from_redis_list(redis_client, "key_ehrs", ehrid)
+            if removed:
+                logger.debug(f"Removed ehr {ehrid} from Redis")
         return JSONResponse(content={"ehr": response["ehr"]}, status_code=200)
     except Exception as e:
         logger.error(f"An exception occurred during delete_ehr: {e}")
@@ -285,6 +290,12 @@ async def delete_admin_query(
             redis_client,
             f"Delete admin query: query={queryname} version={version} deleted successfully",
         )
+        if redis_client:
+            removed = remove_item_from_redis_list(
+                redis_client, "key_queries", queryname, version
+            )
+            if removed:
+                logger.debug(f"Removed query {queryname} version {version} from Redis")
         return JSONResponse(content={"query": response["query"]}, status_code=200)
     except Exception as e:
         logger.error(f"An exception occurred during delete_query: {e}")

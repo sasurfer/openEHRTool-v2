@@ -24,3 +24,12 @@ def get_redis_status(redis_client):
         return "ok"
     except:
         return "error"
+
+
+def remove_item_from_redis_list(redis_client, listname, value, version=""):
+    items = redis_client.lrange(listname, 0, -1)
+    for item in items:
+        if value in item and version in item:
+            redis_client.lrem(listname, 1, item)
+            return 1
+    return 0
