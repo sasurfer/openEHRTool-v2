@@ -144,7 +144,7 @@
                     <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
                       :value="option" v-model="radioparam.selected" class="form-check-input" />
                     <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                    }}</label>
+                      }}</label>
                   </div>
                 </div>
 
@@ -731,9 +731,15 @@ export default defineComponent({
           const queryResults = await this.deletestoredquery(queryname, queryversion);
           console.log('results', queryResults);
           this.results = JSON.stringify(queryResults, null, 2);
-          this.fetchQueryNames();
-          this.selectedVersionValue = null;
-          this.selectedQueryNameValue = null;
+          await this.fetchQueryNames();
+          const queryNameParam = this.currentParams.find(p => p.label === 'Qualified Query Name');
+          if (queryNameParam) {
+            queryNameParam.value = '';
+          }
+          const versionParam = this.currentParams.find(p => p.label === 'Version');
+          if (versionParam) {
+            versionParam.value = '';
+          }
         }
         catch (error) {
           console.error("Error in executeAction:", error);
@@ -824,7 +830,7 @@ export default defineComponent({
         }
       }
       finally {
-        this.isLoadingNames = false;
+        this.isLoadingQueryNames = false;
       }
 
       return this.templates;
