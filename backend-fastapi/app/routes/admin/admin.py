@@ -11,6 +11,7 @@ from app.backend_ehrbase.admin.template import (
 )
 from app.backend_ehrbase.admin.ehr import (
     delete_ehr_admin_ehrbase,
+    delete_directory_admin_ehrbase,
 )
 from app.backend_ehrbase.admin.status import (
     get_status_admin_ehrbase,
@@ -30,6 +31,9 @@ from datetime import datetime
 from lxml import etree
 from app.models.query.query import AQLVersion, AQLName
 from app.backend_redis.myredis import remove_item_from_redis_list
+from app.models.ehr.ehr import (
+    VersionedObjectId,
+)
 
 router = APIRouter()
 
@@ -311,4 +315,55 @@ async def delete_admin_query(
             print(f"An exception occurred during delete_admin_template: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during delete_admin_query"
+            )
+
+
+@router.delete("/ehr/{ehrid}/directory/{directoryid}")
+async def delete_directory_admin(
+    request: Request,
+    ehrid: UUID,
+    directoryid: UUID,
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_directory admin")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        logger.debug(f"data={directoryid}")
+        logger.debug(f"ehrid={ehrid}")
+        ehrid = str(ehrid)
+        directoryid = str(directoryid)
+        url_base_admin = request.app.state.url_base_admin
+        response = await delete_directory_admin_ehrbase(
+            request, auth, url_base_admin, ehrid, directoryid
+        )
+        insertlogline(
+            redis_client,
+            "Delete EHR directory admin: Directory folder for ehrid="
+            + ehrid
+            + " directoryId="
+            + directoryid
+            + " deleted successfully",
+        )
+
+        return JSONResponse(content={"folder": response["ehr"]}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during delete_directory_admin: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Delete EHR directory: Directory folder for ehr {ehrid} directoryId {directoryid} could not be deleted",
+            )
+            return JSONResponse(
+                content={"folder": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during delete_directory_admin: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="Server error during delete_directory_admin",
             )

@@ -36,3 +36,33 @@ async def delete_ehr_admin_ehrbase(
             myresp["status"] = "success"
             myresp["ehr"] = {"ehr": f"EHR {ehrid} deleted successfully."}
         return myresp
+
+
+async def delete_directory_admin_ehrbase(
+    request: Request,
+    auth: str,
+    url_base_admin: str,
+    ehrid: str,
+    dirid: str,
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_directory_admin_ehrbase")
+    async with httpx.AsyncClient() as client:
+        myresp = {}
+        myurl = url_normalize(url_base_admin + "ehr/" + ehrid + "/directory/" + dirid)
+        params = {}
+        headers = {
+            "Authorization": auth,
+            "Content-Type": "application/JSON",
+        }
+        response = await fetch_delete_data(
+            client=client, url=myurl, headers=headers, params=params, timeout=20000
+        )
+        response.raise_for_status()
+        myresp["status_code"] = response.status_code
+        if 200 <= response.status_code < 210:
+            myresp["status"] = "success"
+            myresp["ehr"] = {
+                "ehr": f"Directory folder {dirid} for EHR {ehrid} deleted successfully."
+            }
+        return myresp

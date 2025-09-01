@@ -576,7 +576,7 @@ export default defineComponent({
             placeholder: "Select Query Name",
           }, { label: 'Version', value: '', optionsKey: 'versionOptions', type: 'select', placeholder: "Select Version" }],
         [//7
-          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Directory id', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646::local.ehrbase.org::1" }],
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Directory id', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646" }],
         [//8
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
         [//9
@@ -740,6 +740,28 @@ export default defineComponent({
           if (versionParam) {
             versionParam.value = '';
           }
+        }
+        catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
+        }
+      } else if (action == 'submit_delete_directory') {
+        console.log('inside submit_delete_directory')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (!ehrid?.value) {
+          this.results = 'EHRid is required';
+          return;
+        }
+        const directoryid = this.currentParams.find(p => p.label === 'Directory id');
+        if (!directoryid?.value) {
+          this.results = 'Directory id is required';
+          return;
+        }
+        try {
+          const ehrResults = await this.deletedir(ehrid.value, directoryid.value);
+          console.log('results', ehrResults);
+          this.results = JSON.stringify(ehrResults, null, 2);
         }
         catch (error) {
           console.error("Error in executeAction:", error);
@@ -1412,7 +1434,43 @@ export default defineComponent({
         }
       }
 
-    },
+    }, async deletedir(ehrid, directoryid) {
+      console.log('inside deletedir')
+      console.log(localStorage.getItem("authToken"))
+      console.log('ehrid=', ehrid)
+      console.log('directoryid=', directoryid)
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        const response = await axios.delete(`http://${BACKEND_HOST}/admin/ehr/${ehrid}/directory/${directoryid}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.folder;
+      }
+      catch (error) {
+        console.error("Error in deletedir:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    }
 
 
 
