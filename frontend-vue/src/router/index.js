@@ -7,6 +7,8 @@ import CompositionPage from '@/views/CompositionPage.vue';
 import AQLPage from '@/views/AQLPage.vue';
 import LOGPage from '@/views/LOGPage.vue';
 import ADMINPage from '@/views/ADMINPage.vue';
+import FORMPage from '@/views/FORMPage.vue';
+import CONTRIBPage from '@/views/CONTRIBPage.vue';
 
 const routes = [
   {
@@ -49,17 +51,30 @@ const routes = [
     meta: { sidebarIndex: 5 }, // Query icon is index 5
   },
   {
-    path: '/log',
-    name: 'log',
-    component: LOGPage,
-    meta: { sidebarIndex: 9 } // Log icon is index 9
+    path: '/form',
+    name: 'form',
+    component: FORMPage,
+    meta: { sidebarIndex: 6 } // Form icon is index 6
+  },
+  {
+    path: '/contribution',
+    name: 'contribution',
+    component: CONTRIBPage,
+    meta: { sidebarIndex: 7 } // Contribution icon is index 7
   },
   {
     path: '/admin',
     name: 'admin',
     component: ADMINPage,
     meta: { sidebarIndex: 8 } // Admin icon is index 8
-  }
+  },
+  {
+    path: '/log',
+    name: 'log',
+    component: LOGPage,
+    meta: { sidebarIndex: 9 } // Log icon is index 9
+  },
+
 ];
 
 const router = createRouter({
