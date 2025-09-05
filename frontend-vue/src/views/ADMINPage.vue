@@ -144,7 +144,7 @@
                     <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
                       :value="option" v-model="radioparam.selected" class="form-check-input" />
                     <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                      }}</label>
+                    }}</label>
                   </div>
                 </div>
 
@@ -578,7 +578,7 @@ export default defineComponent({
         [//7
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Directory id', value: '', type: 'text', placeholder: "afe46cce-d8c9-4db8-940b-ee3db170a646" }],
         [//8
-          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" }],
         [//9
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Contribution versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
         [//10
@@ -767,8 +767,29 @@ export default defineComponent({
           console.error("Error in executeAction:", error);
           this.results = `Error: ${error.message}`;
         }
+      } else if (action == 'submit_delete_composition') {
+        console.log('inside submit_delete_composition')
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (!ehrid?.value) {
+          this.results = 'EHRid is required';
+          return;
+        }
+        const compositionid = this.currentParams.find(p => p.label === 'Composition id');
+        if (!compositionid?.value) {
+          this.results = 'Composition id is required';
+          return;
+        }
+        try {
+          const compResults = await this.deletecomposition(ehrid.value, compositionid.value);
+          console.log('results', compResults);
+          this.results = JSON.stringify(compResults, null, 2);
+        }
+        catch (error) {
+          console.error("Error in executeAction:", error);
+          this.results = `Error: ${error.message}`;
+        }
       }
-
 
 
 
@@ -1244,13 +1265,10 @@ export default defineComponent({
       this.resultsOK = false;
       // await this.sleep(5000);
       try {
-        const response = await axios.delete(`http://${BACKEND_HOST}/admin/ehr/`,
+        const response = await axios.delete(`http://${BACKEND_HOST}/admin/ehr/${ehrid}`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`
-            },
-            params: {
-              ehrid: ehrid
             },
             timeout: 2000000,
           });
@@ -1315,8 +1333,42 @@ export default defineComponent({
       } finally {
         this.isLoading = false;
       }
-    },
-    formatXml(xml) {
+    }, async deletecomposition(ehrid, compositionid) {
+      console.log('inside deletecomposition')
+      console.log(localStorage.getItem("authToken"))
+      console.log('ehrid=', ehrid)
+      this.isLoading = true;
+      this.resultsOK = false;
+      // await this.sleep(5000);
+      try {
+        const response = await axios.delete(`http://${BACKEND_HOST}/admin/ehr/${ehrid}/composition/${compositionid}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            timeout: 2000000,
+          });
+        this.resultsOK = true;
+        return response.data.composition;
+      }
+      catch (error) {
+        console.error("Error in deletecomposition:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
+
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    }, formatXml(xml) {
       let formatted = '';
       const reg = /(>)(<)(\/*)/g;
       xml = xml.replace(reg, '$1\n$2$3'); // Ensuring proper line breaks between tags

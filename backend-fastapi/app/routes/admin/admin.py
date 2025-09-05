@@ -19,6 +19,9 @@ from app.backend_ehrbase.admin.status import (
 from app.backend_ehrbase.admin.query import (
     delete_query_admin_ehrbase,
 )
+from app.backend_ehrbase.admin.composition import (
+    delete_composition_admin_ehrbase,
+)
 import redis
 from app.dependencies.redis_dependency import get_redis_client
 from typing import Optional
@@ -214,10 +217,10 @@ async def delete_admin_templates(
             )
 
 
-@router.delete("/ehr")
+@router.delete("/ehr/{ehrid}")
 async def delete_admin_ehr(
     request: Request,
-    ehrid: str = Query(...),
+    ehrid: UUID,
     redis_client: redis.StrictRedis = Depends(get_redis_client),
     token: str = Depends(get_token_from_header),
 ):
@@ -229,6 +232,7 @@ async def delete_admin_ehr(
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
+        ehrid = str(ehrid)
         url_base_admin = request.app.state.url_base_admin
         response = await delete_ehr_admin_ehrbase(request, auth, url_base_admin, ehrid)
         insertlogline(
@@ -366,4 +370,58 @@ async def delete_directory_admin(
             raise HTTPException(
                 status_code=500,
                 detail="Server error during delete_directory_admin",
+            )
+
+
+@router.delete("/ehr/{ehrid}/composition/{compositionid}")
+async def delete_admin_composition(
+    request: Request,
+    ehrid: UUID,
+    compositionid: UUID,
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside delete_admin_composition")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        ehrid = str(ehrid)
+        compositionid = str(compositionid)
+        url_base_admin = request.app.state.url_base_admin
+        response = await delete_composition_admin_ehrbase(
+            request, auth, url_base_admin, ehrid, compositionid
+        )
+        insertlogline(
+            redis_client,
+            f"Delete admin composition: composition {compositionid} from ehr {ehrid} deleted successfully",
+        )
+        if redis_client:
+            removed = remove_item_from_redis_list(
+                redis_client, "key_compositions", ehrid, compositionid
+            )
+            if removed:
+                logger.debug(
+                    f"Removed composition {compositionid} from ehr {ehrid} from Redis"
+                )
+        return JSONResponse(
+            content={"composition": response["composition"]}, status_code=200
+        )
+    except Exception as e:
+        logger.error(f"An exception occurred during delete_composition: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Delete admin composition: composition {compositionid} from ehr {ehrid} could not be deleted successfully",
+            )
+            return JSONResponse(
+                content={"composition": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during delete_admin_composition: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during delete_admin_composition"
             )
