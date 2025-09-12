@@ -22,6 +22,9 @@ from app.backend_ehrbase.admin.query import (
 from app.backend_ehrbase.admin.composition import (
     delete_composition_admin_ehrbase,
 )
+from app.backend_ehrbase.admin.contribution import (
+    put_contribution_admin_ehrbase,
+)
 import redis
 from app.dependencies.redis_dependency import get_redis_client
 from typing import Optional
@@ -29,6 +32,10 @@ import json
 from app.models.template.template import (
     get_template_enum_value,
     TemplatePost,
+)
+from app.models.contribution.contribution import (
+    get_contribution_enum_value,
+    ContributionPost,
 )
 from datetime import datetime
 from lxml import etree
@@ -424,4 +431,82 @@ async def delete_admin_composition(
             print(f"An exception occurred during delete_admin_composition: {e}")
             raise HTTPException(
                 status_code=500, detail="Server error during delete_admin_composition"
+            )
+
+
+@router.put("/contribution/{contributionid}")
+async def put_admin_contribution(
+    request: Request,
+    contributionid: str,
+    data: ContributionPost,
+    ehrid: UUID = Query(...),
+    format: str = Query(...),
+    redis_client: redis.StrictRedis = Depends(get_redis_client),
+    token: str = Depends(get_token_from_header),
+):
+    logger = get_logger(request)
+    logger.debug("inside put_admin_contribution")
+    auth = getattr(request.app.state, "auth", None)
+    secret_key = getattr(request.app.state, "secret_key", None)
+    if not auth or not verify_jwt_token(token, secret_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    contribution = data.contribution
+    format = get_contribution_enum_value(format)
+    if format == "xml":
+        try:
+            xml_bytes = contribution.encode("utf-8")
+            root = etree.fromstring(xml_bytes)
+            contribution = etree.tostring(root)
+        except Exception as e:
+            logger.error(f"unable to read contribution: {e}")
+            raise HTTPException(status_code=400, detail="Unable to read contribution")
+    else:
+        try:
+            contributionjson = json.loads(contribution)
+            contribution = json.dumps(contributionjson)
+        except Exception as e:
+            logger.error(f"unable to read contribution: {e}")
+            raise HTTPException(status_code=400, detail="Unable to read contribution")
+
+    try:
+        contributionid = contributionid.replace("%3A", ":")
+        if ":" in contributionid:
+            VersionedObjectId(contributionid).replace("%3A", ":")
+        else:
+            UUID(contributionid)
+    except Exception as e:
+        logger.error(f"unable to read contributionid: {e}")
+        raise HTTPException(
+            status_code=400, detail="Unable to read contribution id from contribution"
+        )
+
+    try:
+        url_base_admin = request.app.state.url_base_admin
+        ehrid = str(ehrid)
+        response = await put_contribution_admin_ehrbase(
+            request, auth, url_base_admin, contributionid, ehrid, contribution, format
+        )
+        insertlogline(
+            redis_client,
+            f"Put admin contribution: contribution {contributionid} updated successfully",
+        )
+        contributiontext = {
+            "contribution_id": contributionid,
+            "status": response["status"],
+        }
+        return JSONResponse(content={"contribution": contributiontext}, status_code=200)
+    except Exception as e:
+        logger.error(f"An exception occurred during put_admin_contribution: {e}")
+        if 400 <= e.status_code < 500:
+            insertlogline(
+                redis_client,
+                f"Put admin contribution: contribution {contributionid} could not be updated successfully",
+            )
+            return JSONResponse(
+                content={"contribution": e.__dict__}, status_code=e.status_code
+            )
+        else:
+            print(f"An exception occurred during put_contribution: {e}")
+            raise HTTPException(
+                status_code=500, detail="Server error during put_contribution"
             )

@@ -29,8 +29,8 @@ router = APIRouter()
 async def post_contribution(
     request: Request,
     data: ContributionPost,
-    ehrid: UUID = Query(None),
-    format: str = Query(None),
+    ehrid: UUID = Query(...),
+    format: str = Query(...),
     redis_client: redis.StrictRedis = Depends(get_redis_client),
     token: str = Depends(get_token_from_header),
 ):
@@ -47,7 +47,7 @@ async def post_contribution(
         try:
             xml_bytes = contribution.encode("utf-8")
             root = etree.fromstring(xml_bytes)
-            composition = etree.tostring(root)
+            contribution = etree.tostring(root)
         except Exception as e:
             logger.error(f"unable to read contribution: {e}")
             raise HTTPException(status_code=400, detail="Unable to read contribution")
@@ -99,8 +99,8 @@ async def post_contribution(
 async def get_contribution(
     request: Request,
     contributionid: str,
-    ehrid: UUID = Query(None),
-    format: str = Query(None),
+    ehrid: UUID = Query(...),
+    format: str = Query(...),
     redis_client: redis.StrictRedis = Depends(get_redis_client),
     token: str = Depends(get_token_from_header),
 ):
@@ -123,8 +123,6 @@ async def get_contribution(
     try:
         ehrid = str(ehrid)
         url_base = request.app.state.url_base
-        url_base_ecis = request.app.state.url_base_ecis
-        ehrbase_version = request.app.state.ehrbase_version
         format = get_contribution_enum_value(format)
         response = await get_contribution_ehrbase(
             request,

@@ -144,7 +144,7 @@
                     <input :id="`param-${radioIndex}-option-${optionIndex}`" type="radio" :name="`param-${radioIndex}`"
                       :value="option" v-model="radioparam.selected" class="form-check-input" />
                     <label :for="`param-${radioIndex}-option-${optionIndex}`" class="form-check-label">{{ option
-                    }}</label>
+                      }}</label>
                   </div>
                 </div>
 
@@ -476,7 +476,7 @@ export default defineComponent({
           { label: 'Delete Directory', type: ['Del'], what: ['folder'] },//7
           { label: 'Delete Composition', type: ['Del'], what: ['composition'] },//9
           { label: 'Update Contribution', type: ['Put'], what: ['contribution'] },//9
-          { label: 'Delete Contribution', type: ['Del'], what: ['contribution'] },//10
+          // { label: 'Delete Contribution', type: ['Del'], what: ['contribution'] },//10 not supported since 2.0.0
           { label: 'Merge source EHR into target EHR', type: ['Post'], what: ['ehr'] },//11
           { label: 'Retrieve target EHR', type: ['Get'], what: ['ehr'] },//12
           { label: 'Retrieve merging status of source EHR/target EHR', type: ['Get'], what: ['ehr'] },//13
@@ -498,7 +498,7 @@ export default defineComponent({
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_directory' }],//7
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_composition' }],//8
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_update_contribution' }],//9
-        [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_contribution' }],//10
+        // [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_delete_contribution' }],//10 not supported since 2.0.0
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_merge' }],//11
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_get_target_ehr' }],//12
         [{ label: 'Clear Input', action: 'clear_all' }, { label: 'Submit', action: 'submit_folder_get_merging_status' }],//13
@@ -518,8 +518,8 @@ export default defineComponent({
         [],//6
         [],//7
         [],//8
-        [],//9
-        [],//10
+        [{ label: 'Input Format', selected: "JSON", options: ['JSON', 'XML'] },],//9
+        // [],//10
         [],//11
         [],//12
         [],//13
@@ -538,7 +538,7 @@ export default defineComponent({
         false,//7
         false,//8
         false,//9
-        false,//10
+        // false,//10
         true,//11
         true,//12
         true,//13
@@ -580,9 +580,9 @@ export default defineComponent({
         [//8
           { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Composition id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" }],
         [//9
-          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Contribution versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
-        [//10
-          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Contribution versioned id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710::local.ehrbase.org::1" }],
+          { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Contribution id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" }],
+        // [//10
+        //   { label: 'EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Contribution id', value: '', type: 'text', placeholder: "afe46cce-88c1-1bf5-9993-ee11b170a710" }],
         [//11
           { label: 'source EHRid', value: '', type: 'text', placeholder: "56e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'target EHRid', value: '', type: 'text', placeholder: "a8e46cce-d8c9-4db8-940b-ee3db170a646" }, { label: 'Detail Level (optional)', value: '', type: 'text', placeholder: "BASIC" }, { label: 'Reversible', value: '', type: 'Boolean', placeholder: "true" }, { label: 'Dry Run (optional)', value: '', type: 'Boolean', placeholder: "true" }, { label: 'Folder Merge (optional)', value: '', type: 'text', placeholder: "BASIC" }, { label: 'Composition Merge (optional)', value: '', type: 'text', placeholder: "BASIC" }],
         [//12
@@ -790,7 +790,51 @@ export default defineComponent({
           this.results = `Error: ${error.message}`;
         }
       }
+      else if (action == 'submit_update_contribution') //update contribution
+      {
+        this.resultsOK = false;
+        const ehrid = this.currentParams.find(p => p.label === 'EHRid');
+        if (!ehrid?.value) {
+          this.results = 'EHRid is required';
+          return;
+        }
+        this.format = this.currentRadioParams.find(p => p.label === 'Input Format')?.selected || "JSON";
+        const contributionid = this.currentParams.find(p => p.label === 'Contribution id');
+        if (!contributionid?.value) {
+          this.results = 'Contribution id is required';
+          return;
+        }
+        if (!this.selectedFile) {
+          this.results = 'Please select a contribution file'
+          return;
+        }
+        const reader = new FileReader();
+        try {
+          if (this.format == 'XML') {
+            reader.onload = async () => {
+              const parser = new DOMParser();
+              const contribution = parser.parseFromString(reader.result, "application/xml");
+              console.log('contribution is', contribution);
+              const contResults = await this.updatecontribution(contribution, ehrid.value, this.format, contributionid.value);
+              this.results = JSON.stringify(contResults, null, 2);
+            }
+          } else {
+            reader.onload = async () => {
+              const contribution = JSON.parse(reader.result);
+              console.log('contribution is', contribution);
+              const contResults = await this.updatecontribution(contribution, ehrid.value, this.format, contributionid.value);
+              console.log('results', contResults);
+              this.results = JSON.stringify(contResults, null, 2);
+            }
+          }
+          reader.readAsText(this.selectedFile);
 
+        }
+        catch (error) {
+          console.error("Error uploading contribution file:", error);
+          this.results = `Error: ${error.message}`;
+        }
+      }
 
 
 
@@ -1522,8 +1566,55 @@ export default defineComponent({
       } finally {
         this.isLoading = false;
       }
-    }
+    }, async updatecontribution(contribution, ehrid, format, contributionid) {
+      console.log('inside updatecontribution')
+      console.log(localStorage.getItem("authToken"))
+      this.isLoading = true;
+      this.resultsOK = false;
+      let contString;
+      if (format == 'XML') {
+        contString = new XMLSerializer().serializeToString(contribution);
+        console.log('contString is', contString);
+      }
+      else {
+        contString = JSON.stringify(contribution);
+        console.log('jsonString is', contString);
+      }
+      // await this.sleep(5000);
+      try {
+        const response = await axios.put(`http://${BACKEND_HOST}/admin/contribution/${contributionid}`,
+          { "contribution": contString },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+            },
+            params: {
+              ehrid: ehrid,
+              format: format
+            },
+            timeout: 2000000,
+          });
+        this.isLoading = false;
+        return response.data.contribution;
+      }
+      catch (error) {
+        console.error("Error in updatecontribution:", error);
+        if (error?.response?.status) {
+          if (error.response.status === 401) {
+            console.error("Unauthorized access. Please login again.");
+            this.logout();
+            return
+          }
+          if (402 <= error.response.status <= 500) {
+            return error.response.data;
+          }
 
+          throw { status: 500, message: `An unexpected error occurred ${error.response.status}` };
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
 
 
