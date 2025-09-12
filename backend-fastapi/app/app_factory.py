@@ -11,6 +11,7 @@ from app.routes.sidebar.rsidebar.info import router as rsidebar_router
 from app.routes.ehr.ehr import router as ehr_router
 from app.routes.template.template import router as template_router
 from app.routes.composition.composition import router as composition_router
+from app.routes.contribution.contribution import router as contribution_router
 from app.routes.query.query import router as query_router
 from app.routes.admin.admin import router as admin_router
 from app.routes.log.log import router as log_router
@@ -68,6 +69,9 @@ def create_app():
     app.include_router(ehr_router, prefix="/ehr", tags=["ehr"])
     app.include_router(template_router, prefix="/template", tags=["template"])
     app.include_router(composition_router, prefix="/composition", tags=["composition"])
+    app.include_router(
+        contribution_router, prefix="/contribution", tags=["contribution"]
+    )
     app.include_router(query_router, prefix="/query", tags=["query"])
     app.include_router(admin_router, prefix="/admin", tags=["admin"])
     app.include_router(log_router, prefix="/log", tags=["log"])
