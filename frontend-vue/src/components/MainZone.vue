@@ -3,10 +3,10 @@
     <!-- Left Sidebar (Menu with Icons) -->
     <div class="sidebar">
       <ul>
-          <!-- Home Icon -->
+        <!-- Home Icon -->
         <!-- <li @click="goHome">
           <img :src="homeIcon" alt="Home" /> -->
-          
+
         <!-- </li> -->
         <li v-for="(item, index) in menuItems" :key="index" @click="selectIcon(index)">
           <i :class="item.icon"></i>
@@ -95,6 +95,18 @@
 </template>
 
 <script>
+import loginicon from "@/assets/login-icon.svg";
+import homeicon from "@/assets/home-icon.svg";
+import ehricon from "@/assets/ehr-icon.svg";
+import templateicon from "@/assets/template-icon.svg";
+import compositionicon from "@/assets/composition-icon.svg";
+import aqlicon from "@/assets/aql-icon.svg";
+import logicon from "@/assets/log-icon.svg";
+import adminicon from "@/assets/admin-icon.svg";
+import contributionicon from "@/assets/contribution-icon.svg";
+import formicon from "@/assets/form-icon.svg";
+import { h } from "vue";
+
 export default {
   data() {
     return {
@@ -102,18 +114,18 @@ export default {
       // Path for the Home icon
       // homeIcon: require('@/assets/home-icon.png'),
       menuItems: [
-      { label: 'login', iconType: "svg", icon: require('@/assets/login-icon.svg') },
-      { label: 'nothing' , iconType: "None",icon: 'fa fa-caret-square-up'},
-      { label: 'nothing2' , iconType: "None",icon: 'fa fa-caret-square-up'},
-      { label: 'Home', iconType: "svg", icon: require('@/assets/home-icon.svg') },
-      { label: 'EHR',  iconType: "svg", icon: require('@/assets/ehr-icon.svg') },
-      { label : 'Template',  iconType: "svg", icon: require('@/assets/template-icon.svg')},
-      { label: 'Composition', iconType: "svg", icon: require('@/assets/composition-icon.svg') },
-      { label: 'AQL', iconType: "svg", icon: require('@/assets/aql-icon.svg') }, 
-      { label: 'Form', iconType: "svg", icon: require('@/assets/form-icon.svg') },
-      { label: 'Contribution', iconType: "svg", icon: require('@/assets/contribution-icon.svg') },
-      { label: 'Admin', iconType: "svg", icon: require('@/assets/admin-icon.svg') },
-      { label: 'LOG', iconType: "svg", icon: require('@/assets/log-icon.svg') },
+        { label: 'login', iconType: "svg", icon: loginicon },
+        { label: 'nothing', iconType: "None", icon: 'fa fa-caret-square-up' },
+        { label: 'nothing2', iconType: "None", icon: 'fa fa-caret-square-up' },
+        { label: 'Home', iconType: "svg", icon: homeicon },
+        { label: 'EHR', iconType: "svg", icon: ehricon },
+        { label: 'Template', iconType: "svg", icon: templateicon },
+        { label: 'Composition', iconType: "svg", icon: compositionicon },
+        { label: 'AQL', iconType: "svg", icon: aqlicon },
+        { label: 'Form', iconType: "svg", icon: formicon },
+        { label: 'Contribution', iconType: "svg", icon: contributionicon },
+        { label: 'Admin', iconType: "svg", icon: adminicon },
+        { label: 'LOG', iconType: "svg", icon: logicon },
       ],
 
       // Icons on the Far Right
@@ -256,7 +268,8 @@ export default {
   background: #333;
   color: white;
   padding: 10px;
-  height: 100vh; /* Ensures the sidebar spans the full height of the screen */
+  height: 100vh;
+  /* Ensures the sidebar spans the full height of the screen */
   display: flex;
   flex-direction: column;
 }
@@ -376,4 +389,3 @@ export default {
   margin-top: 20px;
 }
 </style>
-

@@ -1,21 +1,21 @@
 services:
   traefik:
-    image: traefik:v3.0  
+    image: traefik:v3.0
     ports:
-      - "80:80"           
-      - "9090:8080"       #traefik dashboard
+      - "80:80"
+      - "9090:8080" #traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
     networks:
-      - traefik-net      
+      - traefik-net
 
   frontend:
-    build: 
+    build:
       context: ./frontend-vue
       dockerfile: Dockerfile
       args:
-        - VUE_APP_BACKEND_HOSTNAME=backend.localhost
+        - VITE_BACKEND_HOSTNAME=backend.localhost
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
@@ -42,20 +42,20 @@ services:
     # ports:
     #   - 5000:5000
     depends_on:
-      - redis     
+      - redis
     networks:
-      - traefik-net         
+      - traefik-net
 
   redis:
     image: redis:7-alpine
-    command:  redis-server  /redis/redis.conf
+    command: redis-server  /redis/redis.conf
     # ports:
     # - 6379:6379
     volumes:
-    - ./redis:/redis
+      - ./redis:/redis
     networks:
       - traefik-net
-  
+
 networks:
   traefik-net:
     driver: bridge

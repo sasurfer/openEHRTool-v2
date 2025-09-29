@@ -1,2 +1,2 @@
 export const BACKEND_HOST =
-  process.env.VUE_APP_BACKEND_HOSTNAME || 'localhost:5000';
+  import.meta.env.VITE_BACKEND_HOSTNAME  || 'localhost:5000';

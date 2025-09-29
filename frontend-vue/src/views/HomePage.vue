@@ -97,8 +97,8 @@ import CompositionInfoModal from '@/components/CompositionInfoModal.vue';
 import AQLInfoModal from '@/components/AQLInfoModal.vue';
 import { defineComponent } from "vue";
 import axios from 'axios';  // Import axios for making HTTP requests
-import MyCardComponent from "@/components/ui/MyCardComponent";
-import CardContent from "@/components/ui/CardContent";
+import MyCardComponent from "@/components/ui/MyCardComponent.vue";
+import CardContent from "@/components/ui/CardContent.vue";
 import MyBarChart from '@/components/MyBarChart.vue'; // Import the chart compone
 import MyPieChart from '@/components/MyPieChart.vue'; // Import the PieChart component
 import RotateSquare2 from '@/components/ui/RotateSquare2.vue'; // Import the RotateSquare2 

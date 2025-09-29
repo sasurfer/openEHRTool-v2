@@ -15,7 +15,7 @@ services:
       context: ./frontend-vue
       dockerfile: Dockerfile
       args:
-        - VUE_APP_BACKEND_HOSTNAME=backend.localhost
+        - VITE_BACKEND_HOSTNAME=backend.localhost
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"

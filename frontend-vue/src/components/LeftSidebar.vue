@@ -37,6 +37,28 @@
 </template>
 
 <script>
+import logicon from "@/assets/log-icon.svg";
+import logicon_active from "@/assets/log-icon_active.svg";
+import adminicon from "@/assets/admin-icon.svg";
+import adminicon_active from "@/assets/admin-icon_active.svg";
+import contributionicon from "@/assets/contribution-icon.svg";
+import contributionicon_active from "@/assets/contribution-icon_active.svg";
+import formicon from "@/assets/form-icon.svg";
+import formicon_active from "@/assets/form-icon_active.svg";
+import aqlicon from "@/assets/aql-icon.svg";
+import aqlicon_active from "@/assets/aql-icon_active.svg";
+import compositionicon from "@/assets/composition-icon.svg";
+import compositionicon_active from "@/assets/composition-icon_active.svg";
+import templateicon from "@/assets/template-icon.svg";
+import templateicon_active from "@/assets/template-icon_active.svg";
+import ehricon from "@/assets/ehr-icon.svg";
+import ehricon_active from "@/assets/ehr-icon_active.svg";
+import homeicon from "@/assets/home-icon.svg";
+import homeicon_active from "@/assets/home-icon_active.svg";
+import loginicon from "@/assets/login-icon.svg";
+import loginicon_active from "@/assets/login-icon_active.svg";
+
+
 export default {
   data() {
     return {
@@ -45,16 +67,16 @@ export default {
       // homeIcon: require('@/assets/home-icon.png'),
       // activeIndex: 1, // Default active icon (Home)
       menuItems: [
-        { label: 'login', iconType: "svg", icon2: require('@/assets/login-icon.svg'), icon: require('@/assets/login-icon_active.svg') },
-        { label: 'Home', iconType: "svg", icon2: require('@/assets/home-icon_active.svg'), icon: require('@/assets/home-icon.svg') },
-        { label: 'EHR', iconType: "svg", icon: require('@/assets/ehr-icon.svg'), icon2: require('@/assets/ehr-icon_active.svg') },
-        { label: 'Template', iconType: "svg", icon: require('@/assets/template-icon.svg'), icon2: require('@/assets/template-icon_active.svg') },
-        { label: 'Composition', iconType: "svg", icon: require('@/assets/composition-icon.svg'), icon2: require('@/assets/composition-icon_active.svg') },
-        { label: 'AQL', iconType: "svg", icon: require('@/assets/aql-icon.svg'), icon2: require('@/assets/aql-icon_active.svg') },
-        { label: 'Form', iconType: "svg", icon: require('@/assets/form-icon.svg'), icon2: require('@/assets/form-icon_active.svg') },
-        { label: 'Contribution', iconType: "svg", icon: require('@/assets/contribution-icon.svg'), icon2: require('@/assets/contribution-icon_active.svg') },
-        { label: 'Admin', iconType: "svg", icon: require('@/assets/admin-icon.svg'), icon2: require('@/assets/admin-icon_active.svg') },
-        { label: 'LOG', iconType: "svg", icon: require('@/assets/log-icon.svg'), icon2: require('@/assets/log-icon_active.svg') },
+        { label: 'login', iconType: "svg", icon2: loginicon, icon: loginicon_active },
+        { label: 'Home', iconType: "svg", icon2: homeicon_active, icon: homeicon },
+        { label: 'EHR', iconType: "svg", icon: ehricon, icon2: ehricon_active },
+        { label: 'Template', iconType: "svg", icon: templateicon, icon2: templateicon_active },
+        { label: 'Composition', iconType: "svg", icon: compositionicon, icon2: compositionicon_active },
+        { label: 'AQL', iconType: "svg", icon: aqlicon, icon2: aqlicon_active },
+        { label: 'Form', iconType: "svg", icon: formicon, icon2: formicon_active },
+        { label: 'Contribution', iconType: "svg", icon: contributionicon, icon2: contributionicon_active },
+        { label: 'Admin', iconType: "svg", icon: adminicon, icon2: adminicon_active },
+        { label: 'LOG', iconType: "svg", icon: logicon, icon2: logicon_active },
       ],
 
       // selectedIcon: null,

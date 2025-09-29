@@ -131,7 +131,7 @@ npm install
 ```
 run the server with:
 ```
-npm run serve
+npm run dev
 ```
 
 ### Backend

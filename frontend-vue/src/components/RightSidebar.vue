@@ -4,30 +4,34 @@
     <div class="rsidebar">
       <ul>
         <div class="ricons">
-          <li v-for="(item, index) in menuItems" 
-              :key="index"
-              @click="selectIcon(index)">
+          <li v-for="(item, index) in menuItems" :key="index" @click="selectIcon(index)">
             <i :class="item.icon"></i>
             <img v-if="item.iconType === 'svg'" :src="item.icon" alt="icon" width="25" height="25" />
           </li>
         </div>
       </ul>
     </div>
-   </div>
+  </div>
 </template>
 
 <script>
+import ehricon from "@/assets/ehr-icon.svg";
+import templateicon from "@/assets/template-icon.svg";
+import compositionicon from "@/assets/composition-icon.svg";
+import aqlicon from "@/assets/aql-icon.svg";
+
+
 export default {
   data() {
     return {
       // Icons on the Right Sidebar
       menuItems: [
-      { label: 'EHR',  iconType: "svg", icon: require('@/assets/ehr-icon.svg') },
-      { label : 'Template',  iconType: "svg", icon: require('@/assets/template-icon.svg')},
-      { label: 'Composition', iconType: "svg", icon: require('@/assets/composition-icon.svg') },
-      { label: 'AQL', iconType: "svg", icon: require('@/assets/aql-icon.svg') }, 
+        { label: 'EHR', iconType: "svg", icon: ehricon },
+        { label: 'Template', iconType: "svg", icon: templateicon },
+        { label: 'Composition', iconType: "svg", icon: compositionicon },
+        { label: 'AQL', iconType: "svg", icon: aqlicon },
       ],
-  };
+    };
   },
   methods: {
     openEHRInfo() {
@@ -46,10 +50,10 @@ export default {
     selectIcon(index) {
       switch (index) {
         case 0:
-          this.openEHRInfo(); 
+          this.openEHRInfo();
           break;
         case 1:
-          this.openTemplateInfo(); 
+          this.openTemplateInfo();
           break;
         case 2:
           this.openCompositionInfo();
@@ -73,17 +77,20 @@ export default {
 }
 
 .rsidebar {
-  position: fixed; /* Fix sidebar position */
+  position: fixed;
+  /* Fix sidebar position */
   top: 0;
   right: 0;
   width: 40px;
   background: #5e5d5d;
   color: white;
   padding: 5px;
-  height: 100vh; /* Ensures the sidebar spans the full height of the screen */
+  height: 100vh;
+  /* Ensures the sidebar spans the full height of the screen */
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Pushes top-icons to the top and bottom-icons to the bottom */
+  justify-content: space-between;
+  /* Pushes top-icons to the top and bottom-icons to the bottom */
   /* padding-top: 20px; */
   overflow-y: auto;
   z-index: 10;
@@ -104,7 +111,7 @@ export default {
   cursor: pointer;
   margin-bottom: 20px;
   margin-top: 20px;
-  text-align:center;
+  text-align: center;
   padding: 0px;
 }
 
